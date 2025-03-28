@@ -121,14 +121,27 @@ namespace Instruction {
 
 
 // CGW: Utility class for safe conversion of strings to integers.
+// RDP: Supports hexadecimal values
 static class Converter {
     public static int? ToInteger(string? input) {
-        return int.TryParse(input, out int result) ? result : (int?)null;
+        if (string.IsNullOrEmpty(input)) return null;
+
+        if (input.StartsWith("0x")) {
+            if (int.TryParse(input.Substring(2),
+                        System.Globalization.NumberStyles.HexNumber, null, out
+                        int result)) {
+                return result;
+            }
+        } else if (int.TryParse(input, out int result)) {
+            return result;
+        }
+        return null;
     }
 }
 
 // CGW: Main processor class for the assembler.
 class Processor {
+    // RDP: Validates condition
     private static bool checkArgs(bool cond, string ?msg, int lineNumber) {
         if (!cond) {
             err(msg, lineNumber);
@@ -136,6 +149,7 @@ class Processor {
         return true;
     }
 
+    // RDP: Prints an error message and stops program
     private static void err(string ?msg, int lineNumber) {
         if (!string.IsNullOrEmpty(msg)) {
             Console.WriteLine($"{lineNumber}: {msg}");
@@ -144,7 +158,7 @@ class Processor {
     }
 
     public static void Main(string[] args) {
-        
+
         // CGW: Validate command-line arguments.
         if (args.Length != 2) {
             Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <file.asm> <file.v>");
@@ -160,12 +174,15 @@ class Processor {
         // CGW: First Pass - Identify labels and calculate memory addresses.
         int programCounter = 0;
         using (StreamReader reader = new StreamReader(inputPath)) {
+
             string? line;
             int lineNumber = 0;
             while ((line = reader.ReadLine()) != null) {
                 lineNumber++;
 
-                (SourceLine[]? operations, bool isLabel) = InitialPass.AnalyzeLine(line.Trim(), lineNumber);
+                (SourceLine[]? operations, bool isLabel) =
+                    InitialPass.AnalyzeLine(line.Trim(), lineNumber);
+
                 if (operations == null || operations.Length == 0) continue;
 
                 if (isLabel) {
