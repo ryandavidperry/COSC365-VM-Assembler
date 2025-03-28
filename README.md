@@ -1,6 +1,6 @@
 # VM Assembler 26
 
-Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
+DO NOT USE THIS CODE. USE THE CODE ON MAIN. CHASE'S CODE IS 100x TIMES BETTER
 
 # Instructions
 
