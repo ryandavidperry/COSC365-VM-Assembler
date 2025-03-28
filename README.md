@@ -3,10 +3,11 @@
 Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
 
 # Instructions
-- [ ] Miscellaneous
+- [o] Miscellaneous
     - [X] exit
     - [X] swap
     - [X] nop
+    - [X] input
     - [ ] stinput
     - [X] debug
 - [ ] pop
