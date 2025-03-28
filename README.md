@@ -31,9 +31,9 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] not
 - [X] dup
 - [X] stprint
-- [ ] call
-- [ ] return
-- [ ] goto
+- [X] call
+- [X] return
+- [X] goto
 - [ ] Binary If
     - [ ] eq
     - [ ] ne
