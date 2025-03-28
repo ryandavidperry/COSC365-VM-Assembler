@@ -332,6 +332,9 @@ namespace Instruction {
         }
     }
 
+    // RDP: Encodes dump instruction
+    public class Dump : IInstruction { public int Encode() => unchecked((int)0xE0000000); }
+
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -513,6 +516,7 @@ class Processor {
                             elements, lineNumber), pc),
                 "ifpl" => new Instruction.GreaterThanEqualZero(validatePC(labelPositions,
                             elements, lineNumber), pc),
+                "dump" => new Instruction.Dump(),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
