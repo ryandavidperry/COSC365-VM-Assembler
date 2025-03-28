@@ -34,7 +34,7 @@ namespace Instruction {
 
     // CGW: Represents a NOP (No Operation) instruction.
     public class Nop : IInstruction {
-        public int Generate() => 0x00000000;
+        public int Generate() => 0x02000000;
     }
 
     // CGW: Represents an Exit instruction, optionally using a value parameter.
