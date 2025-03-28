@@ -166,6 +166,68 @@ namespace Instruction {
         }
         public int Encode() => unchecked((int)(0x70000000 | offset));
     }
+
+    // RDP: Binary If instructions
+    public class Equals : IInstruction {
+        private int offset;
+
+        public Equals(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x80000000 | offset));
+    }
+
+    public class NotEquals : IInstruction {
+        private int offset;
+
+        public NotEquals(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x82000000 | offset));
+    }
+
+    public class LessThan : IInstruction {
+        private int offset;
+
+        public LessThan(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x84000000 | offset));
+    }
+
+    public class GreaterThan : IInstruction {
+        private int offset;
+
+        public GreaterThan(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x86000000 | offset));
+    }
+
+    public class LessEquals : IInstruction {
+        private int offset;
+
+        public LessEquals(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x88000000 | offset));
+    }
+
+    public class GreaterEquals : IInstruction {
+        private int offset;
+
+        public GreaterEquals(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x8A000000 | offset));
+    }
+
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -189,6 +251,7 @@ static class Converter {
 
 // CGW: Main processor class for the assembler.
 class Processor {
+
     // RDP: Validates condition
     private static bool checkArgs(bool cond, string ?msg, int lineNumber) {
         if (!cond) {
@@ -305,6 +368,48 @@ class Processor {
                         !argOne.HasValue, "offset to return is not a multiple of 4.", 
                         lineNumber) ? argOne : null),
                 "goto" => new Instruction.Goto(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifeq" => new Instruction.Equals(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifne" => new Instruction.NotEquals(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "iflt" => new Instruction.LessThan(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifgt" => new Instruction.GreaterThan(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifle" => new Instruction.LessEquals(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifge" => new Instruction.GreaterEquals(
                         checkArgs(elements.Length > 1, 
                             "no label given for goto statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
