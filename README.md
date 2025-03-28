@@ -45,3 +45,7 @@ Create issues for each part of the project you are working on so mutliple people
     - [ ] ez
     - [ ] nz
     - [ ] mi
+- [ ] print
+- [ ] dump
+- [ ] push
+- [ ] stpush
