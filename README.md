@@ -30,7 +30,7 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] neg
     - [X] not
 - [X] dup
-- [ ] stprint
+- [X] stprint
 - [ ] call
 - [ ] return
 - [ ] goto
