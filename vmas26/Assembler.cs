@@ -82,7 +82,7 @@ namespace Instruction {
     public class StInput : IInstruction {
         private int? value;
         public StInput(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x44440000 | (value ?? 0)));
+        public int Generate() => unchecked((int)(0x050000 | (value ?? 0)));
     }
 
     // CGW: Debug help.
