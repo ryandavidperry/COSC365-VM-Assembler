@@ -106,12 +106,19 @@ namespace Instruction {
     public class Div : IInstruction { public int Generate() => unchecked((int)0x23000000); }
     public class Rem : IInstruction { public int Generate() => unchecked((int)0x24000000); }
     public class And : IInstruction { public int Generate() => unchecked((int)0x25000000); }
+
+    // RDP: Arithmetic operations instructions
     public class Or : IInstruction { public int Generate() => unchecked((int)0x26000000); }
     public class Xor : IInstruction { public int Generate() => unchecked((int)0x27000000); }
     public class Lsl : IInstruction { public int Generate() => unchecked((int)0x28000000); }
     public class Lsr : IInstruction { public int Generate() => unchecked((int)0x29000000); }
     public class Asr : IInstruction { public int Generate() => unchecked((int)0x2B000000); }
+
+    // RDP: Unary arithmetic instructions
+    public class Neg : IInstruction { public int Generate() => unchecked((int)0x30000000); }
+    public class Not : IInstruction { public int Generate() => unchecked((int)0x31000000); }
 }
+
 
 // CGW: Utility class for safe conversion of strings to integers.
 static class Converter {
@@ -192,6 +199,8 @@ class Processor {
                 "lsl" => new Instruction.Lsl(),
                 "lsr" => new Instruction.Lsr(),
                 "asr" => new Instruction.Asr(),
+                "neg" => new Instruction.Neg(),
+                "not" => new Instruction.Not(),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
