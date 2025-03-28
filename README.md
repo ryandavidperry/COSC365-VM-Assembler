@@ -3,17 +3,17 @@
 Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
 
 # Instructions
-- [O] Miscellaneous
+- [X] Miscellaneous
     - [X] exit
     - [X] swap
     - [X] nop
     - [X] input
-    - [ ] stinput
-        - [ ] Add support for hex values
-    - [ ] debug
-        - [ ] Add support for hex values
-- [ ] pop
-    - [ ] Check if offset is a multiple of 4
+    - [X] stinput
+        - [X] Add support for hex values
+    - [X] debug
+        - [X] Add support for hex values
+- [X] pop
+    - [X] Check if offset is a multiple of 4
 - [X] Binary Arithmetic
     - [X] add
     - [X] sub
