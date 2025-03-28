@@ -45,6 +45,22 @@ static class InitialPass {
     }
 }
 
+public class Encoder {
+
+    // RDP: PC-Relative Offset Helper
+    public static int PCRelative(int? target, int pc, int mask, uint opcode) {
+
+        // Calculate the PC-Relative Offset
+        int pcRelativeOffset = target.GetValueOrDefault() - pc;
+
+        // Apply the mask to align the offset
+        int offset = (int)(pcRelativeOffset & mask);
+
+        // Combine the base opcode with the offset
+        return unchecked((int)((int)opcode | offset));
+    }
+}
+
 // CGW: Prototyping 
 namespace Instruction {
 
@@ -140,13 +156,16 @@ namespace Instruction {
     // The argument is checked before passing it to the instruction,
     // therefore the value is not acutally optional as it appears here.
     public class Call : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Call(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0xFFFFFFC);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x50000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0xFFFFFFC, 0x50000000);
+        }
     }
 
     // RDP: Encodes return instruction with optional parameter.
@@ -158,13 +177,16 @@ namespace Instruction {
 
     // RDP: Encodes goto instruction
     public class Goto : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Goto(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x0FFFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x70000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x0FFFFFFF, 0x70000000);
+        }
     }
 
     // CGW: Push instruction prototype, needs testing.
@@ -180,104 +202,134 @@ namespace Instruction {
 
     // RDP: Binary If instructions
     public class Equals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Equals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x80000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x80000000);
+        }
     }
 
     public class NotEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public NotEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x82000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x82000000);
+        }
     }
 
     public class LessThan : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessThan(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x84000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x84000000);
+        }
     }
 
     public class GreaterThan : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterThan(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x86000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x86000000);
+        }
     }
 
     public class LessEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x88000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x88000000);
+        }
     }
 
     public class GreaterEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x8A000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x8A000000);
+        }
     }
 
     // RDP: Unary If instructions
     public class EqualsZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public EqualsZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x90000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x90000000);
+        }
     }
     
     public class NotEqualsZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public NotEqualsZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x92000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x92000000);
+        }
     }
 
     public class LessThanZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessThanZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x94000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x94000000);
+        }
     }
 
     public class GreaterThanEqualZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterThanEqualZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x96000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x96000000);
+        }
     }
 
 }
