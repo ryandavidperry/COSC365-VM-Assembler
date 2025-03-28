@@ -38,11 +38,11 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] gt
     - [X] le
     - [X] ge
-- [ ] Unary If
-    - [ ] ez
-    - [ ] nz
-    - [ ] mi
-    - [ ] pl
+- [X] Unary If
+    - [X] ez
+    - [X] nz
+    - [X] mi
+    - [X] pl
 - [ ] print
 - [ ] dump
 - [ ] push
