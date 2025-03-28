@@ -25,9 +25,9 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] lsl
     - [X] lsr
     - [X] asr
-- [ ] Unary Arithmetic
-    - [ ] neg
-    - [ ] not
+- [X] Unary Arithmetic
+    - [X] neg
+    - [X] not
 - [ ] dup
 - [ ] stprint
 - [ ] call
