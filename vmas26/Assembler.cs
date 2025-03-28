@@ -6,15 +6,18 @@ using System.Collections.Generic;
 class SourceLine {
     public string OriginalText { get; set; }
     public string[] Elements { get; set; }
-    public SourceLine(string line) {
+    public int LineNumber { get; set; }
+
+    public SourceLine(string line, int lineNumber) {
         OriginalText = line;
         Elements = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        LineNumber = lineNumber;
     }
 }
 
 // CGW: Prototyping
 static class InitialPass {
-    public static (SourceLine[]?, bool) AnalyzeLine(string line) {
+    public static (SourceLine[]?, bool) AnalyzeLine(string line, int lineNumber) {
         // RDP: Handle empty lines and comments
 
         // Trim whitespace
@@ -34,9 +37,9 @@ static class InitialPass {
 
         // CGW: If a line ends with a colon, it's considered a label.
         if (line.EndsWith(":")) {
-            return (new[] { new SourceLine(line) }, true);
+            return (new[] { new SourceLine(line, lineNumber) }, true);
         }
-        return (new[] { new SourceLine(line) }, false);
+        return (new[] { new SourceLine(line, lineNumber) }, false);
     }
 }
 
@@ -93,7 +96,7 @@ namespace Instruction {
     public class Pop : IInstruction {
         private int? value;
         public Pop(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x10000000 | (value ?? 4)));
+        public int Generate() => unchecked((int)(0x10000000 | (value ?? 4))); 
     }
 
     // CGW: Arithmetic operation instructions.
@@ -126,6 +129,20 @@ static class Converter {
 
 // CGW: Main processor class for the assembler.
 class Processor {
+    private static bool checkArgs(bool cond, string ?msg, int lineNumber) {
+        if (!cond) {
+            err(msg, lineNumber);
+        }
+        return true;
+    }
+
+    private static void err(string ?msg, int lineNumber) {
+        if (!string.IsNullOrEmpty(msg)) {
+            Console.WriteLine($"{lineNumber}: {msg}");
+        }
+        Environment.Exit(1);
+    }
+
     public static void Main(string[] args) {
         
         // CGW: Validate command-line arguments.
@@ -144,14 +161,18 @@ class Processor {
         int programCounter = 0;
         using (StreamReader reader = new StreamReader(inputPath)) {
             string? line;
+            int lineNumber = 0;
             while ((line = reader.ReadLine()) != null) {
-                (SourceLine[]? operations, bool isLabel) = InitialPass.AnalyzeLine(line.Trim());
+                lineNumber++;
+
+                (SourceLine[]? operations, bool isLabel) = InitialPass.AnalyzeLine(line.Trim(), lineNumber);
                 if (operations == null || operations.Length == 0) continue;
 
                 if (isLabel) {
                     string labelName = operations[0].OriginalText.TrimEnd(':');
                     if (labelPositions.ContainsKey(labelName)) {
-                        Console.WriteLine($"Error: Duplicate label '{labelName}' detected at address {programCounter}");
+                        Console.WriteLine($"Error: Duplicate label '{labelName}'" +
+                                          $" detected at address {programCounter}");
                         Environment.Exit(1);
                     }
                     labelPositions[labelName] = programCounter;
@@ -165,6 +186,7 @@ class Processor {
         // CGW: Second Pass - Generate machine code from instructions.
         List<Instruction.IInstruction> operationList = new List<Instruction.IInstruction>();
         for (int i = 0; i < lines.Count; i++) {
+            int lineNumber = lines[i].LineNumber;
             var elements = lines[i].Elements;
             int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1));
             int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2));
@@ -183,7 +205,9 @@ class Processor {
                 "swap" => new Instruction.Swap(argOne, argTwo),
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
-                "pop" => new Instruction.Pop(argOne),
+                "pop" => new Instruction.Pop(checkArgs(argOne % 4 == 0 ||
+                            !argOne.HasValue,  "pop value is not divisible by 4", 
+                            lineNumber) ? argOne : null),
                 "input" => new Instruction.Input(),
                 "stinput" => new Instruction.StInput(argOne),
                 "add" => new Instruction.Add(),
@@ -206,22 +230,20 @@ class Processor {
         }
 
         // RDP: Encode each operation in operation list to output path
-        using (FileStream fs = new FileStream(outputPath, FileMode.Create,
-                    FileAccess.Write)) {
-            using (BinaryWriter bw = new BinaryWriter(fs)) {
-                // Encode magic number
-                bw.Write(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
+        using (BinaryWriter bw = new BinaryWriter(File.Open(outputPath,
+                        FileMode.Create))) {
+            // Encode magic number
+            bw.Write(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
 
-                foreach (var op in operationList) {
-                    int objectCode = op.Generate();
-                    bw.Write(objectCode);
-                }
+            foreach (var op in operationList) {
+                int objectCode = op.Generate();
+                bw.Write(objectCode);
+            }
 
-                // Padd out a multiple of 4 instructions with nops
-                int padding = (4 - operationList.Count % 4) % 4;
-                for (int i = 0; i < padding; i++) {
-                    bw.Write(0x02000000);
-                }
+            // Padd out a multiple of 4 instructions with nops
+            int padding = (4 - operationList.Count % 4) % 4;
+            for (int i = 0; i < padding; i++) {
+                bw.Write(0x02000000);
             }
         }
 
