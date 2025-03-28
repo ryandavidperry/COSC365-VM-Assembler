@@ -167,6 +167,17 @@ namespace Instruction {
         public int Encode() => unchecked((int)(0x70000000 | offset));
     }
 
+    // CGW: Push instruction prototype, needs testing.
+    public class Push : IInstruction {
+        private readonly int _operand;
+        public Push(int? inputValue = 0) {
+            _operand = inputValue ?? 0;
+        }
+        public int Encode() {
+            return (0b1111 << 28) | (_operand & 0x0FFFFFFF);
+        }
+    }
+
     // RDP: Binary If instructions
     public class Equals : IInstruction {
         private int offset;
@@ -394,6 +405,7 @@ class Processor {
                 "asr" => new Instruction.Asr(),
                 "neg" => new Instruction.Neg(),
                 "not" => new Instruction.Not(),
+                "push" => new Instruction.Push(argOne),
                 "dup" => new Instruction.Dup(checkArgs(argOne % 4 == 0 ||
                         !argOne.HasValue, "offsets to dup must be multiples of 4.",
                         lineNumber) ? argOne : null),
