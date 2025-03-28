@@ -5,7 +5,7 @@ Create issues for each part of the project you are working on so mutliple people
 # Instructions
 - [ ] Miscellaneous
     - [X] exit
-    - [ ] swap
+    - [X] swap
     - [X] nop
     - [ ] stinput
     - [X] debug
