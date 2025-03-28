@@ -34,6 +34,16 @@ public class Exit : IInstruction {
     }
 }
 
+public class Debug : IInstruction {
+    private readonly int _value;
+    public Debug(int value = 0) {
+        _value = value & 0xFFFFFF;
+    }
+    public int Encode() {
+        return (0b0000 << 28) | (0b1111 << 24) | _value;
+    }
+}
+
 class Assembler {
     private int _lineNumber;
     private int _pass;
@@ -162,6 +172,9 @@ class Assembler {
             case "exit":
                 exit();
                 break;
+            case "debug":
+                debug();
+                break;
             default:
                 error($"Unknown instruction: {_op}");
                 break;
@@ -224,6 +237,30 @@ class Assembler {
         }
         checkArguments(_argList.Count <= 1);
         passAction(4, new Exit(exitCode));
+    }
+
+    private void debug() {
+        int debugValue = 0;
+
+        if (_argList.Count == 1) {
+            string arg = _argList[0];
+
+            if (arg.StartsWith("0x")) {
+                // Hex value
+                if (!int.TryParse(arg.Substring(2),
+                            System.Globalization.NumberStyles.HexNumber, null, out
+                            debugValue)) {
+                    error($"Invalid hexadecimal value: {arg}");
+                    return;
+                }
+            } else if (!int.TryParse(arg, out debugValue)) {
+                    // Decimal value
+                    error($"Invalid decimal value: {arg}");
+                    return;
+            }
+        }
+        checkArguments(_argList.Count <= 1);
+        passAction(4, new Debug(debugValue));
     }
 
     /*
