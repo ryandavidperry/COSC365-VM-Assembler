@@ -82,7 +82,7 @@ namespace Instruction {
     public class StInput : IInstruction {
         private int? value;
         public StInput(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x050000 | (value ?? 0)));
+        public int Generate() => unchecked((int)(0x05000000 | (value ?? 0xFFFFFF)));
     }
 
     // CGW: Debug help.
@@ -100,12 +100,17 @@ namespace Instruction {
     }
 
     // CGW: Arithmetic operation instructions.
-    public class Add : IInstruction { public int Generate() => unchecked((int)0x77770000); }
-    public class Sub : IInstruction { public int Generate() => unchecked((int)0x88880000); }
-    public class Mul : IInstruction { public int Generate() => unchecked((int)0x99990000); }
-    public class Div : IInstruction { public int Generate() => unchecked((int)0xAAAA0000); }
-    public class Rem : IInstruction { public int Generate() => unchecked((int)0xBBBB0000); }
-    public class And : IInstruction { public int Generate() => unchecked((int)0xCCCC0000); }
+    public class Add : IInstruction { public int Generate() => unchecked((int)0x20000000); }
+    public class Sub : IInstruction { public int Generate() => unchecked((int)0x21000000); }
+    public class Mul : IInstruction { public int Generate() => unchecked((int)0x22000000); }
+    public class Div : IInstruction { public int Generate() => unchecked((int)0x23000000); }
+    public class Rem : IInstruction { public int Generate() => unchecked((int)0x24000000); }
+    public class And : IInstruction { public int Generate() => unchecked((int)0x25000000); }
+    public class Or : IInstruction { public int Generate() => unchecked((int)0x26000000); }
+    public class Xor : IInstruction { public int Generate() => unchecked((int)0x27000000); }
+    public class Lsl : IInstruction { public int Generate() => unchecked((int)0x28000000); }
+    public class Lsr : IInstruction { public int Generate() => unchecked((int)0x29000000); }
+    public class Asr : IInstruction { public int Generate() => unchecked((int)0x2B000000); }
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -175,6 +180,18 @@ class Processor {
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
                 "input" => new Instruction.Input(),
+                "stinput" => new Instruction.StInput(argOne),
+                "add" => new Instruction.Add(),
+                "sub" => new Instruction.Sub(),
+                "mul" => new Instruction.Mul(),
+                "div" => new Instruction.Div(),
+                "rem" => new Instruction.Rem(),
+                "and" => new Instruction.And(),
+                "or" => new Instruction.Or(),
+                "xor" => new Instruction.Xor(),
+                "lsl" => new Instruction.Lsl(),
+                "lsr" => new Instruction.Lsr(),
+                "asr" => new Instruction.Asr(),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
