@@ -51,7 +51,7 @@ namespace Instruction {
             this.first = first;
             this.second = second;
         }
-        public int Generate() => unchecked((int)(0x22220000 | ((first ?? 0) << 8) | (second ?? 0)));
+        public int Generate() => unchecked((int)(0x01000000 | ((first ?? 4) << 12) | (second ?? 0)));
     }
 
     // CGW: Represents a simple Input instruction.
