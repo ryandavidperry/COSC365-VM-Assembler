@@ -129,7 +129,7 @@ namespace Instruction {
         public int Encode() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
     }
 
-    // RDP: Encodes stprint instruction with optional parameter
+    // RDP: Encodes stprint instruction with optional parameter.
     public class StPrint : IInstruction {
         private int? value;
         public StPrint(int? value) => this.value = value;
@@ -148,8 +148,14 @@ namespace Instruction {
         }
         public int Encode() => unchecked((int)(0x50000000 | offset));
     }
-}
 
+    // RDP: Encodes return instruction with optional parameter.
+    public class Return : IInstruction {
+        private int? value;
+        public Return(int? value) => this.value = value;
+        public int Encode() => unchecked((int)(0x60000000 | (value ?? 0)));
+    }
+}
 
 // CGW: Utility class for safe conversion of strings to integers.
 // RDP: Supports hexadecimal values
@@ -284,6 +290,9 @@ class Processor {
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
+                "return" => new Instruction.Return(checkArgs(argOne % 4 == 0 || 
+                        !argOne.HasValue, "offset to return is not a multiple of 4.", 
+                        lineNumber) ? argOne : null),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
