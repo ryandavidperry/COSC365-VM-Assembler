@@ -29,7 +29,7 @@ Create issues for each part of the project you are working on so mutliple people
 - [X] Unary Arithmetic
     - [X] neg
     - [X] not
-- [ ] dup
+- [X] dup
 - [ ] stprint
 - [ ] call
 - [ ] return
