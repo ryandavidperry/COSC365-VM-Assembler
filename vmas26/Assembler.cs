@@ -15,6 +15,25 @@ class SourceLine {
 // CGW: Prototyping
 static class InitialPass {
     public static (SourceLine[]?, bool) AnalyzeLine(string line) {
+        // RDP: Handle empty lines and comments
+
+        // Trim whitespace
+        line = line.Trim();
+
+        // Ignore empty lines
+        if (string.IsNullOrEmpty(line)) return (null, false);
+
+        // Ignore full-line comments
+        if (line.StartsWith('#')) return (null, false);
+
+        // Remove inline comments
+        int commentIndex = line.IndexOf('#');
+        if (commentIndex != -1) {
+            line = line.Substring(0, commentIndex).Trim();
+        }
+
+        // Ignore now-empyt lines after removing inline comments
+        if (string.IsNullOrEmpty(line)) return (null, false);
 
         // CGW: If a line ends with a colon, it's considered a label.
         if (line.EndsWith(":")) {
