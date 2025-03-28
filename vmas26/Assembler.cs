@@ -75,7 +75,7 @@ namespace Instruction {
 
     // CGW: Represents a simple Input instruction.
     public class Input : IInstruction {
-        public int Generate() => unchecked((int)0x33330000);
+        public int Generate() => unchecked((int)0x04000000);
     }
 
     // CGW: Represents a StInput instruction with a parameter.
@@ -174,6 +174,7 @@ class Processor {
                 "swap" => new Instruction.Swap(argOne, argTwo),
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
+                "input" => new Instruction.Input(),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
