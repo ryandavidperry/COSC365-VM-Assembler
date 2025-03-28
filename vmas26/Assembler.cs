@@ -70,7 +70,7 @@ namespace Instruction {
     public class Debug : IInstruction {
         private int? value;
         public Debug(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x55550000 | (value ?? 0)));
+        public int Generate() => unchecked((int)(0x0F000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Pop instruction, removing an item from the stack.
@@ -154,6 +154,7 @@ class Processor {
                 "exit" => new Instruction.Exit(argOne),
                 "swap" => new Instruction.Swap(argOne, argTwo),
                 "nop" => new Instruction.Nop(),
+                "debug" => new Instruction.Debug(argOne),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
