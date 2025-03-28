@@ -41,7 +41,7 @@ namespace Instruction {
     public class Exit : IInstruction {
         private int? value;
         public Exit(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x11110000 | (value ?? 0)));
+        public int Generate() => unchecked((int)(0x00000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Swap instruction with two optional parameters.
@@ -158,6 +158,26 @@ class Processor {
             };
 
             operationList.Add(op);
+        }
+
+        // RDP: Encode each operation in operation list to output path
+        using (FileStream fs = new FileStream(outputPath, FileMode.Create,
+                    FileAccess.Write)) {
+            using (BinaryWriter bw = new BinaryWriter(fs)) {
+                // Encode magic number
+                bw.Write(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
+
+                foreach (var op in operationList) {
+                    int objectCode = op.Generate();
+                    bw.Write(objectCode);
+                }
+
+                // Padd out a multiple of 4 instructions with nops
+                int padding = (4 - operationList.Count % 4) % 4;
+                for (int i = 0; i < padding; i++) {
+                    bw.Write(0x02000000);
+                }
+            }
         }
 
         Console.WriteLine("Assembly completed successfully.");
