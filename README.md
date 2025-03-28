@@ -31,13 +31,13 @@ Create issues for each part of the project you are working on so mutliple people
 - [X] call
 - [X] return
 - [X] goto
-- [ ] Binary If
-    - [ ] eq
-    - [ ] ne
-    - [ ] lt
-    - [ ] gt
-    - [ ] le
-    - [ ] ge
+- [X] Binary If
+    - [X] eq
+    - [X] ne
+    - [X] lt
+    - [X] gt
+    - [X] le
+    - [X] ge
 - [ ] Unary If
     - [ ] ez
     - [ ] nz
