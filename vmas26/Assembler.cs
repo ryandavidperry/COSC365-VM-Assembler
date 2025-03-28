@@ -223,8 +223,8 @@ class Processor {
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
                 "pop" => new Instruction.Pop(checkArgs(argOne % 4 == 0 ||
-                            !argOne.HasValue,  "pop value is not divisible by 4", 
-                            lineNumber) ? argOne : null),
+                        !argOne.HasValue,  "offset to pop() is not a multiple of 4.",
+                        lineNumber) ? argOne : null),
                 "input" => new Instruction.Input(),
                 "stinput" => new Instruction.StInput(argOne),
                 "add" => new Instruction.Add(),
