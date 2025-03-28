@@ -13,6 +13,7 @@ Create issues for each part of the project you are working on so mutliple people
     - [ ] debug
         - [ ] Add support for hex values
 - [ ] pop
+    - [ ] Check if offset is a multiple of 4
 - [X] Binary Arithmetic
     - [X] add
     - [X] sub
