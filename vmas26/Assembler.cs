@@ -24,10 +24,19 @@ public class Dup : IInstruction {
     }
 }
 
+public class Exit : IInstruction {
+    private readonly int _exitCode;
+    public Exit(int exitCode = 0) {
+        _exitCode = exitCode & 0xFF;
+    }
+    public int Encode() {
+        return (0b0000 << 28) | (_exitCode);
+    }
+}
+
 class Assembler {
     private int _lineNumber;
     private int _pass;
-    private bool _hasErrors;
     private List<IInstruction> _instructionList = new List<IInstruction>();
 
     // Address for labels
@@ -59,7 +68,7 @@ class Assembler {
      * Pass 1 encodes the labels to the program counter.
      * Pass 2 writes object code.
      */
-    private int assemble (string[] lines, string outputFile) {
+    private void assemble (string[] lines, string outputFile) {
         _pass = 1;
         for (_lineNumber = 0; _lineNumber < lines.Length; _lineNumber++) {
             tokenize(lines[_lineNumber]);
@@ -72,11 +81,7 @@ class Assembler {
             process();
         }
 
-        if(!_hasErrors) {
-            writeOutput(outputFile);
-        }
-
-        return _hasErrors ? 1 : 0;
+        writeOutput(outputFile);
     }
 
     /*
@@ -142,7 +147,7 @@ class Assembler {
     private void process() {
         if (string.IsNullOrEmpty(_op) && _argList.Count == 0) {
             // When there is a label or a blank line, the size of the
-            // instruction is 0 and it outputs nothing
+            // instruction is 0 and does not call an instruction
             passAction(0, null);
             return;
         }
@@ -153,6 +158,9 @@ class Assembler {
                 break;
             case "dup":
                 dup();
+                break;
+            case "exit":
+                exit();
                 break;
             default:
                 error($"Unknown instruction: {_op}");
@@ -165,7 +173,6 @@ class Assembler {
      * the correct action for that pass.
      *
      * Size is size of instruction.
-     * Outbyte is what to output.
      */
     private void passAction (ushort size, IInstruction ?instruction) {
         if (_pass == 1) {
@@ -177,12 +184,7 @@ class Assembler {
             // Increment address by size of instruction
             _address += size;
         } else {
-            /*
-             * Output the byte representing the opcode.
-             * If the opcode carries additional information
-             *      (e.g., immediate or address), we will output
-             *      that in a separate helper function
-             */
+            // Add instruction to instruction list
             if (instruction != null) {
                 _instructionList.Add(instruction);
             }
@@ -209,7 +211,19 @@ class Assembler {
     private void dup() {
         checkArguments(_argList.Count == 1 && int.TryParse(_argList[0], out _));
         int offset = int.Parse(_argList[0]);
+        if (offset % 4 != 0) {
+            error("dup offset must be divisible by 4");
+        }
         passAction(4, new Dup(offset));
+    }
+
+    private void exit() {
+        int exitCode = 0;
+        if (_argList.Count == 1 && int.TryParse(_argList[0], out int parsedCode)) {
+            exitCode = parsedCode;
+        }
+        checkArguments(_argList.Count <= 1);
+        passAction(4, new Exit(exitCode));
     }
 
     /*
@@ -253,7 +267,7 @@ class Assembler {
      */
     private void error(string message) {
         Console.WriteLine($"{_lineNumber+1}: {message}");
-        _hasErrors = true;
+        Environment.Exit(1);
     }
 
     public static void Main(string[] args) {
