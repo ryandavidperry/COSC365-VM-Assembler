@@ -155,6 +155,17 @@ namespace Instruction {
         public Return(int? value) => this.value = value;
         public int Encode() => unchecked((int)(0x60000000 | (value ?? 0)));
     }
+
+    // RDP: Encodes goto instruction
+    public class Goto : IInstruction {
+        private int offset;
+
+        public Goto(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x0FFFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x70000000 | offset));
+    }
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -285,7 +296,7 @@ class Processor {
                 "stprint" => new Instruction.StPrint(argOne),
                 "call" => new Instruction.Call(
                         checkArgs(elements.Length > 1, 
-                            "no label given for call statement", lineNumber) && 
+                            "no label given for call statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
@@ -293,6 +304,13 @@ class Processor {
                 "return" => new Instruction.Return(checkArgs(argOne % 4 == 0 || 
                         !argOne.HasValue, "offset to return is not a multiple of 4.", 
                         lineNumber) ? argOne : null),
+                "goto" => new Instruction.Goto(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for goto statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
