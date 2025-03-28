@@ -32,7 +32,7 @@ static class InitialPass {
             line = line.Substring(0, commentIndex).Trim();
         }
 
-        // Ignore now-empyt lines after removing inline comments
+        // Ignore now-empty lines after removing inline comments
         if (string.IsNullOrEmpty(line)) return (null, false);
 
         // CGW: If a line ends with a colon, it's considered a label.
