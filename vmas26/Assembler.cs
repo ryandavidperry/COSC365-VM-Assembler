@@ -162,22 +162,23 @@ class Assembler {
             return;
         }
 
-        switch (_op) {
-            case "nop":
-                nop();
-                break;
-            case "dup":
-                dup();
-                break;
-            case "exit":
-                exit();
-                break;
-            case "debug":
-                debug();
-                break;
-            default:
-                error($"Unknown instruction: {_op}");
-                break;
+        var instructionMap = new Dictionary<string, Action> {
+            {"exit", exit!}, {"swap", swap!}, {"nop", nop!}, {"stinput", stinput!}, 
+            {"debug", debug!}, {"pop", pop!}, {"add", add!}, {"sub", sub!},
+            {"mul", mul!}, {"div", div!}, {"rem", rem!}, {"and", and!},
+            {"or", or!}, {"xor", xor!}, {"lsl", lsl!}, {"lsr", lsr!},
+            {"asr", asr!}, {"neg", neg!}, {"not", not!}, {"stprint", stprint!},
+            {"call", call!}, {"return", fReturn!}, {"goto", fGoto!}, {"eq", eq!},
+            {"ne", ne!}, {"lt", lt!}, {"gt", gt!}, {"le", le!},
+            {"ge", ge!}, {"ez", ez!}, {"nz", nz!}, {"mi", mi!},
+            {"pl", pl!}, {"dup", dup!}, {"print", print!}, {"dump", dump!},
+            {"push", push!}, {"stpush", stpush!}
+        };
+
+        if (instructionMap.TryGetValue(_op, out Action ?action)) {
+            action!();
+        } else {
+            error($"Unknown instruction: {_op}");
         }
     }
 
@@ -216,20 +217,6 @@ class Assembler {
         _symbolTable.Add(new SymbolTable(_label, _address));
     }
 
-    private void nop() {
-        checkArguments(_argList.Count == 0);
-        passAction(4, new Nop());
-    }
-
-    private void dup() {
-        checkArguments(_argList.Count == 1 && int.TryParse(_argList[0], out _));
-        int offset = int.Parse(_argList[0]);
-        if (offset % 4 != 0) {
-            error("dup offset must be divisible by 4");
-        }
-        passAction(4, new Dup(offset));
-    }
-
     private void exit() {
         int exitCode = 0;
         if (_argList.Count == 1 && int.TryParse(_argList[0], out int parsedCode)) {
@@ -237,6 +224,19 @@ class Assembler {
         }
         checkArguments(_argList.Count <= 1);
         passAction(4, new Exit(exitCode));
+    }
+
+    private void swap() {
+
+    }
+
+    private void nop() {
+        checkArguments(_argList.Count == 0);
+        passAction(4, new Nop());
+    }
+
+    private void stinput() {
+
     }
 
     private void debug() {
@@ -261,6 +261,143 @@ class Assembler {
         }
         checkArguments(_argList.Count <= 1);
         passAction(4, new Debug(debugValue));
+    }
+
+    private void pop() {
+
+    }
+
+    private void add() {
+
+    }
+
+    private void sub() {
+
+    }
+
+    private void mul() {
+
+    }
+
+    private void div() {
+
+    }
+
+    private void rem() {
+
+    }
+
+    private void and() {
+
+    }
+
+    private void or() {
+
+    }
+
+    private void xor() {
+
+    }
+
+    private void lsl() {
+
+    }
+
+    private void lsr() {
+
+    }
+
+    private void asr() {
+
+    }
+
+    private void neg() {
+
+    }
+
+    private void not() {
+
+    }
+
+    private void stprint() {
+
+    }
+
+    private void call() {
+
+    }
+
+    private void fReturn() {
+
+    }
+
+    private void fGoto() {
+
+    }
+
+    private void eq() {
+
+    }
+
+    private void ne() {
+
+    }
+
+    private void lt() {
+
+    }
+
+    private void gt() {
+
+    }
+
+    private void le() {
+
+    }
+
+    private void ge() {
+
+    }
+
+    private void ez() {
+
+    }
+
+    private void nz() {
+
+    }
+
+    private void mi() {
+
+    }
+
+    private void pl() {
+
+    }
+
+    private void dup() {
+        checkArguments(_argList.Count == 1 && int.TryParse(_argList[0], out _));
+        int offset = int.Parse(_argList[0]);
+        if (offset % 4 != 0) {
+            error("dup offset must be divisible by 4");
+        }
+        passAction(4, new Dup(offset));
+    }
+
+    private void print() {
+
+    }
+
+    private void dump() {
+
+    }
+
+    private void push() {
+
+    }
+
+    private void stpush() {
+
     }
 
     /*
