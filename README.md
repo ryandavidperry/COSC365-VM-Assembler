@@ -25,6 +25,7 @@ Create issues for each part of the project you are working on so mutliple people
 - [ ] Unary Arithmetic
     - [ ] neg
     - [ ] not
+- [ ] dup
 - [ ] stprint
 - [ ] call
 - [ ] return
