@@ -96,7 +96,7 @@ namespace Instruction {
     public class Pop : IInstruction {
         private int? value;
         public Pop(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x66660000 | (value ?? 0)));
+        public int Generate() => unchecked((int)(0x10000000 | (value ?? 4)));
     }
 
     // CGW: Arithmetic operation instructions.
@@ -186,6 +186,7 @@ class Processor {
                 "swap" => new Instruction.Swap(argOne, argTwo),
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
+                "pop" => new Instruction.Pop(argOne),
                 "input" => new Instruction.Input(),
                 "stinput" => new Instruction.StInput(argOne),
                 "add" => new Instruction.Add(),
