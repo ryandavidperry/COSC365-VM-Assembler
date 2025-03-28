@@ -3,26 +3,28 @@
 Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
 
 # Instructions
-- [o] Miscellaneous
+- [O] Miscellaneous
     - [X] exit
     - [X] swap
     - [X] nop
     - [X] input
     - [ ] stinput
-    - [X] debug
+        - [ ] Add support for hex values
+    - [ ] debug
+        - [ ] Add support for hex values
 - [ ] pop
-- [ ] Binary Arithmetic
-    - [ ] add
-    - [ ] sub
-    - [ ] mul
-    - [ ] div
-    - [ ] rem
-    - [ ] and
-    - [ ] or
-    - [ ] xor
-    - [ ] lsl
-    - [ ] lsr
-    - [ ] asr
+- [X] Binary Arithmetic
+    - [X] add
+    - [X] sub
+    - [X] mul
+    - [X] div
+    - [X] rem
+    - [X] and
+    - [X] or
+    - [X] xor
+    - [X] lsl
+    - [X] lsr
+    - [X] asr
 - [ ] Unary Arithmetic
     - [ ] neg
     - [ ] not
