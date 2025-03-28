@@ -20,9 +20,6 @@ static class InitialPass {
         // Trim whitespace
         line = line.Trim();
 
-        // Ignore empty lines
-        if (string.IsNullOrEmpty(line)) return (null, false);
-
         // Ignore full-line comments
         if (line.StartsWith('#')) return (null, false);
 
@@ -32,7 +29,7 @@ static class InitialPass {
             line = line.Substring(0, commentIndex).Trim();
         }
 
-        // Ignore now-empty lines after removing inline comments
+        // Ignore empty lines
         if (string.IsNullOrEmpty(line)) return (null, false);
 
         // CGW: If a line ends with a colon, it's considered a label.
