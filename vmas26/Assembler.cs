@@ -7,17 +7,19 @@ class SourceLine {
     public string OriginalText { get; set; }
     public string[] Elements { get; set; }
     public int LineNumber { get; set; }
+    public int ProgramCounter { get; set; }
 
-    public SourceLine(string line, int lineNumber) {
+    public SourceLine(string line, int lineNumber, int programCounter) {
         OriginalText = line;
         Elements = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         LineNumber = lineNumber;
+        ProgramCounter = programCounter;
     }
 }
 
 // CGW: Prototyping
 static class InitialPass {
-    public static (SourceLine[]?, bool) AnalyzeLine(string line, int lineNumber) {
+    public static (SourceLine[]?, bool) AnalyzeLine(string line, int lineNumber, int programCounter) {
         // RDP: Handle empty lines and comments
 
         // Trim whitespace
@@ -37,9 +39,9 @@ static class InitialPass {
 
         // CGW: If a line ends with a colon, it's considered a label.
         if (line.EndsWith(":")) {
-            return (new[] { new SourceLine(line, lineNumber) }, true);
+            return (new[] { new SourceLine(line, lineNumber, programCounter) }, true);
         }
-        return (new[] { new SourceLine(line, lineNumber) }, false);
+        return (new[] { new SourceLine(line, lineNumber, programCounter) }, false);
     }
 }
 
@@ -133,6 +135,19 @@ namespace Instruction {
         public StPrint(int? value) => this.value = value;
         public int Encode() => unchecked((int)(0x40000000 | (value ?? 0)));
     }
+
+    // RDP: Encodes call instruction with pc-relative offset.
+    // The argument is checked before passing it to the instruction,
+    // therefore the value is not acutally optional as it appears here.
+    public class Call : IInstruction {
+        private int offset;
+
+        public Call(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0xFFFFFFC);
+        }
+        public int Encode() => unchecked((int)(0x50000000 | offset));
+    }
 }
 
 
@@ -197,7 +212,7 @@ class Processor {
                 lineNumber++;
 
                 (SourceLine[]? operations, bool isLabel) =
-                    InitialPass.AnalyzeLine(line.Trim(), lineNumber);
+                    InitialPass.AnalyzeLine(line.Trim(), lineNumber, programCounter);
 
                 if (operations == null || operations.Length == 0) continue;
 
@@ -220,6 +235,7 @@ class Processor {
         List<Instruction.IInstruction> operationList = new List<Instruction.IInstruction>();
         for (int i = 0; i < lines.Count; i++) {
             int lineNumber = lines[i].LineNumber;
+            int pc = lines[i].ProgramCounter;
             var elements = lines[i].Elements;
             int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1));
             int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2));
@@ -233,6 +249,7 @@ class Processor {
             }
 
             // CGW: Match instructions using a switch expression.
+            // RDP: Handle argument checking.
             Instruction.IInstruction op = elements[0].ToLower() switch {
                 "exit" => new Instruction.Exit(argOne),
                 "swap" => new Instruction.Swap(argOne, argTwo),
@@ -260,6 +277,13 @@ class Processor {
                         !argOne.HasValue, "offsets to dup must be multiples of 4.",
                         lineNumber) ? argOne : null),
                 "stprint" => new Instruction.StPrint(argOne),
+                "call" => new Instruction.Call(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for call statement", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
