@@ -46,7 +46,13 @@ static class InitialPass {
         }
 
         // RDP: Handle stpush instruction
-        if (elements.Length > 1 && elements[0] == "stpush") {
+        if (elements[0] == "stpush") {
+
+            // Check if string literal exists
+            if (elements.Length <= 1) {
+                Console.WriteLine($"{lineNumber}: stpush must have corresponding string literal");
+                Environment.Exit(1);
+            }
             string content = line.Substring(line.IndexOf('"'));
 
             // Check quotation marks
