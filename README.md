@@ -49,4 +49,4 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] printb
 - [X] dump
 - [X] push
-- [ ] stpush
+- [X] stpush
