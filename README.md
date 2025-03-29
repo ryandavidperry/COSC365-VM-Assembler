@@ -43,7 +43,10 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] nz
     - [X] mi
     - [X] pl
-- [ ] print
+- [X] print
+    - [X] printh
+    - [X] printo
+    - [X] printb
 - [X] dump
 - [X] push
 - [ ] stpush
