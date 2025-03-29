@@ -189,7 +189,7 @@ namespace Instruction {
         }
     }
 
-    // CGW: Push instruction prototype, needs testing.
+    // CGW: Encode push instruction prototype
     public class Push : IInstruction {
         private readonly int _operand;
         public Push(int? inputValue = 0) {
@@ -335,6 +335,30 @@ namespace Instruction {
     // RDP: Encodes dump instruction
     public class Dump : IInstruction { public int Encode() => unchecked((int)0xE0000000); }
 
+    // RDP: Encodes print instructions
+    public class Print : IInstruction {
+        private int? offset;
+        private char? type;
+
+        public Print(int? offset, char? type) {
+            this.offset = offset;
+            this.type = type;
+        }
+        public int Encode() {
+            // Truncate offset to multiple of 4
+            int process = offset - (offset % 4) ?? 0;
+
+            if (type == 'h') {
+                return unchecked((int)(0xD0000000 | process | 0x00000001));
+            } else if (type == 'b') {
+                return unchecked((int)(0xD0000000 | process | 0x00000002));
+            } else if (type == 'o') {
+                return unchecked((int)(0xD0000000 | process | 0x00000003));
+            }
+
+            return unchecked((int)(0xD0000000 | process));
+        }
+    }
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -517,6 +541,10 @@ class Processor {
                 "ifpl" => new Instruction.GreaterThanEqualZero(validatePC(labelPositions,
                             elements, lineNumber), pc),
                 "dump" => new Instruction.Dump(),
+                "print" => new Instruction.Print(argOne, 'd'),
+                "printh" => new Instruction.Print(argOne, 'h'),
+                "printo" => new Instruction.Print(argOne, 'o'),
+                "printb" => new Instruction.Print(argOne, 'b'),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
