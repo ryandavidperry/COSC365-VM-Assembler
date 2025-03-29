@@ -682,7 +682,5 @@ class Processor {
                 bw.Write(0x02000000);
             }
         }
-
-        Console.WriteLine("Assembly completed successfully.");
     }
 }
