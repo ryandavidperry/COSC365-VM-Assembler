@@ -364,7 +364,7 @@ namespace Instruction {
 // CGW: Utility class for safe conversion of strings to integers.
 // RDP: Supports hexadecimal values
 static class Converter {
-    public static int? ToInteger(string? input) {
+    public static int? ToInteger(string? input, string arg, int lineNumber) {
         if (string.IsNullOrEmpty(input)) return (int?)null;
 
         if (input.StartsWith("0x")) {
@@ -372,6 +372,9 @@ static class Converter {
                         System.Globalization.NumberStyles.HexNumber, null, out
                         int result)) {
                 return result;
+            } else {
+                Console.WriteLine($"{lineNumber}: Invalid value to {arg}: {input}.");
+                Environment.Exit(1);
             }
         } else if (int.TryParse(input, out int result)) {
             return result;
@@ -475,8 +478,8 @@ class Processor {
             int lineNumber = lines[i].LineNumber;
             int pc = lines[i].ProgramCounter;
             var elements = lines[i].Elements;
-            int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1));
-            int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2));
+            int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1), elements[0], lineNumber);
+            int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2), elements[0], lineNumber);
 
             // CGW: Resolve labels to memory addresses if applicable.
             if (elements.Length > 1 && labelPositions.ContainsKey(elements[1])) {
