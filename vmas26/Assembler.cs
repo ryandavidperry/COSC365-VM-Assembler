@@ -742,6 +742,12 @@ class Processor {
             operationList.Add(op);
         }
 
+        if (operationList.Count < 1) {
+            Console.WriteLine($"ERROR: {AppDomain.CurrentDomain.FriendlyName}: " +
+                               "no instructions to assemble.");
+            Environment.Exit(1);
+        }
+
         // RDP: Encode each operation in operation list to output path
         using (BinaryWriter bw = new BinaryWriter(File.Open(outputPath,
                         FileMode.Create))) {
