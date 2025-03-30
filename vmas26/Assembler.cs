@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 
@@ -19,7 +20,7 @@ class SourceLine {
 
 // CGW: Prototyping
 static class InitialPass {
-    public static (SourceLine[]?, bool) AnalyzeLine(string line, int
+    public static (SourceLine[], bool) AnalyzeLine(string line, int
             lineNumber, int programCounter) {
         // RDP: Handle empty lines and comments
 
@@ -27,7 +28,7 @@ static class InitialPass {
         line = line.Trim();
 
         // Ignore full-line comments
-        if (line.StartsWith('#')) return (null, false);
+        if (line.StartsWith('#')) return (new SourceLine[0], false);
 
         // Remove inline comments
         int commentIndex = line.IndexOf('#');
@@ -36,7 +37,7 @@ static class InitialPass {
         }
 
         // Ignore empty lines
-        if (string.IsNullOrEmpty(line)) return (null, false);
+        if (string.IsNullOrEmpty(line)) return (new SourceLine[0], false);
 
         string[] elements = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -74,12 +75,12 @@ static class InitialPass {
                 .Replace("\\\"", "\"")
                 .Replace("\\\\", "\\");
 
-            List<SourceLine> expandedInstructions = new();
-            List<byte> pushBytes = new();
+            List<SourceLine> expandedInstructions = new List<SourceLine>();
+            List<byte> pushBytes = new List<byte>();
 
             // Convert content string to ASCII bytes
             byte[] bytes = System.Text.Encoding.ASCII.GetBytes(content);
-            List<byte> byteList = new(bytes);
+            List<byte> byteList = new List<byte>(bytes);
 
             // Start at the end of the byte list
             for (int i = byteList.Count - 1; i >= 0; i--) {
@@ -135,7 +136,7 @@ static class InitialPass {
 public class Encoder {
 
     // RDP: PC-Relative Offset Helper
-    public static int PCRelative(int? target, int pc, int mask, uint opcode) {
+    public static int PCRelative(Nullable<int> target, int pc, int mask, uint opcode) {
 
         // Calculate the PC-Relative Offset
         int pcRelativeOffset = target.GetValueOrDefault() - pc;
@@ -163,15 +164,15 @@ namespace Instruction {
 
     // CGW: Represents an Exit instruction, optionally using a value parameter.
     public class Exit : IInstruction {
-        private int? value;
-        public Exit(int? value) => this.value = value;
+        private Nullable<int> value;
+        public Exit(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x00000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Swap instruction with two optional parameters.
     public class Swap : IInstruction {
-        private int? first, second;
-        public Swap(int? first, int? second) {
+        private Nullable<int> first, second;
+        public Swap(Nullable<int> first, Nullable<int> second) {
             this.first = first;
             this.second = second;
         }
@@ -185,22 +186,22 @@ namespace Instruction {
 
     // CGW: Represents a StInput instruction with a parameter.
     public class StInput : IInstruction {
-        private int? value;
-        public StInput(int? value) => this.value = value;
+        private Nullable<int> value;
+        public StInput(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x05000000 | (value ?? 0xFFFFFF)));
     }
 
     // CGW: Debug help.
     public class Debug : IInstruction {
-        private int? value;
-        public Debug(int? value) => this.value = value;
+        private Nullable<int> value;
+        public Debug(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x0F000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Pop instruction, removing an item from the stack.
     public class Pop : IInstruction {
-        private int? value;
-        public Pop(int? value) => this.value = value;
+        private Nullable<int> value;
+        public Pop(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x10000000 | (value ?? 4)));
     }
 
@@ -225,8 +226,8 @@ namespace Instruction {
 
     // RDP: Encodes dup instruction with optional parameter
     public class Dup : IInstruction {
-        private readonly int? _offset;
-        public Dup(int? offset) {
+        private readonly Nullable<int> _offset;
+        public Dup(Nullable<int> offset) {
             _offset = offset & ~3;
         }
         public int Encode() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
@@ -234,8 +235,8 @@ namespace Instruction {
 
     // RDP: Encodes stprint instruction with optional parameter.
     public class StPrint : IInstruction {
-        private int? value;
-        public StPrint(int? value) => this.value = value;
+        private Nullable<int> value;
+        public StPrint(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x40000000 | (value ?? 0)));
     }
 
@@ -243,10 +244,10 @@ namespace Instruction {
     // The argument is checked before passing it to the instruction,
     // therefore the value is not acutally optional as it appears here.
     public class Call : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public Call(int? target, int pc) {
+        public Call(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -257,17 +258,17 @@ namespace Instruction {
 
     // RDP: Encodes return instruction with optional parameter.
     public class Return : IInstruction {
-        private int? value;
-        public Return(int? value) => this.value = value;
+        private Nullable<int> value;
+        public Return(Nullable<int> value) => this.value = value;
         public int Encode() => unchecked((int)(0x60000000 | (value ?? 0)));
     }
 
     // RDP: Encodes goto instruction
     public class Goto : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public Goto(int? target, int pc) {
+        public Goto(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -279,7 +280,7 @@ namespace Instruction {
     // CGW: Encode push instruction prototype
     public class Push : IInstruction {
         private readonly int _operand;
-        public Push(int? inputValue = 0) {
+        public Push(Nullable<int> inputValue = 0) {
             _operand = inputValue ?? 0;
         }
         public int Encode() {
@@ -289,10 +290,10 @@ namespace Instruction {
 
     // RDP: Binary If instructions
     public class Equals : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public Equals(int? target, int pc) {
+        public Equals(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -302,10 +303,10 @@ namespace Instruction {
     }
 
     public class NotEquals : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public NotEquals(int? target, int pc) {
+        public NotEquals(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -315,10 +316,10 @@ namespace Instruction {
     }
 
     public class LessThan : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public LessThan(int? target, int pc) {
+        public LessThan(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -328,10 +329,10 @@ namespace Instruction {
     }
 
     public class GreaterThan : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public GreaterThan(int? target, int pc) {
+        public GreaterThan(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -341,10 +342,10 @@ namespace Instruction {
     }
 
     public class LessEquals : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public LessEquals(int? target, int pc) {
+        public LessEquals(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -354,10 +355,10 @@ namespace Instruction {
     }
 
     public class GreaterEquals : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public GreaterEquals(int? target, int pc) {
+        public GreaterEquals(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -368,10 +369,10 @@ namespace Instruction {
 
     // RDP: Unary If instructions
     public class EqualsZero : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public EqualsZero(int? target, int pc) {
+        public EqualsZero(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -381,10 +382,10 @@ namespace Instruction {
     }
 
     public class NotEqualsZero : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public NotEqualsZero(int? target, int pc) {
+        public NotEqualsZero(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -394,10 +395,10 @@ namespace Instruction {
     }
 
     public class LessThanZero : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public LessThanZero(int? target, int pc) {
+        public LessThanZero(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -407,10 +408,10 @@ namespace Instruction {
     }
 
     public class GreaterThanEqualZero : IInstruction {
-        private int? target;
+        private Nullable<int> target;
         private int pc;
 
-        public GreaterThanEqualZero(int? target, int pc) {
+        public GreaterThanEqualZero(Nullable<int> target, int pc) {
             this.target = target;
             this.pc = pc;
         }
@@ -424,10 +425,10 @@ namespace Instruction {
 
     // RDP: Encodes print instructions
     public class Print : IInstruction {
-        private int? offset;
+        private Nullable<int> offset;
         private char? type;
 
-        public Print(int? offset, char? type) {
+        public Print(Nullable<int> offset, char? type) {
             this.offset = offset;
             this.type = type;
         }
@@ -436,14 +437,14 @@ namespace Instruction {
             int process = offset - (offset % 4) ?? 0;
 
             if (type == 'h') {
-                return unchecked((int)(0xD0000000 | process | 0x00000001));
+                return unchecked((int)(0xD0000000 | (uint)process | 0x00000001));
             } else if (type == 'b') {
-                return unchecked((int)(0xD0000000 | process | 0x00000002));
+                return unchecked((int)(0xD0000000 | (uint)process | 0x00000002));
             } else if (type == 'o') {
-                return unchecked((int)(0xD0000000 | process | 0x00000003));
+                return unchecked((int)(0xD0000000 | (uint)process | 0x00000003));
             }
 
-            return unchecked((int)(0xD0000000 | process));
+            return unchecked((int)(0xD0000000 | (uint)process));
         }
     }
 }
@@ -453,11 +454,11 @@ class Processor {
 
     // CGW: Utility class for safe conversion of strings to integers.
     // RDP: Supports hexadecimal values
-    private static int? ToInteger(string? input, string op, Dictionary<string,
+    private static Nullable<int> ToInteger(string input, string op, Dictionary<string,
             int> labelPositions, int lineNumber, string[] elements) {
 
         // Check if input is null
-        if (string.IsNullOrEmpty(input)) return (int?)null;
+        if (string.IsNullOrEmpty(input)) return (Nullable<int>)null;
 
         // Try to parse hexadecimal value to integer
         if (input.StartsWith("0x")) {
@@ -483,7 +484,7 @@ class Processor {
         // Without this code block, this function returns null for invalid
         // offsets. During encoding, null values default to a valid offset.
         // Therefore, invalid offsets must be caught now.
-        HashSet<string> TakesOffset = new() {
+        HashSet<string> TakesOffset = new HashSet<string>() {
             "pop", "swap", "stinput", "dup", "stprint", "return", "print", "exit"
         };
         if (TakesOffset.Contains(op)) {
@@ -493,23 +494,23 @@ class Processor {
             }
             if (string.Compare(op, "swap") == 0) {
                 err($"invalid offset given to {op} " + 
-                    $"{(string.Compare(input, elements[1]) == 0 ? "from" : "to")} '{input}'",
-                    lineNumber);
+                        $"{(string.Compare(input, elements[1]) == 0 ? "from" : "to")} '{input}'",
+                        lineNumber);
             } else {
                 err($"invalid offset given to {op} '{input}'", lineNumber);
             }
         }
 
-        HashSet<string> TakesLabel = new() { "push", "debug" };
+        HashSet<string> TakesLabel = new HashSet<string>() { "push", "debug" };
         if (!labelPositions.ContainsKey(input) && TakesLabel.Contains(op)) {
             err($"Invalid value for {op}: {input}.", lineNumber);
         }
 
-        return (int?)null;
+        return (Nullable<int>)null;
     }
 
     // RDP: Check first argument of PC-Relative Instruction
-    private static int? validatePC(Dictionary<string, int> labelPositions,
+    private static Nullable<int> validatePC(Dictionary<string, int> labelPositions,
             string[] elements, int lineNumber) {
 
         // Check if argument exists
@@ -525,7 +526,7 @@ class Processor {
     }
 
     // RDP: Check that first argument is a multiple of 4 to ensure alignment
-    private static int? validateAlign(int? arg, string[] elements, int
+    private static Nullable<int> validateAlign(Nullable<int> arg, string[] elements, int
             lineNumber) {
 
         // Check that argument exists and is divisible by 4
@@ -536,7 +537,7 @@ class Processor {
     }
 
     // RDP: Prints an error message and stops program
-    private static void err(string ?msg, int lineNumber) {
+    private static void err(string msg, int lineNumber) {
         if (!string.IsNullOrEmpty(msg)) {
             Console.WriteLine($"{lineNumber}: {msg}");
         }
@@ -561,12 +562,14 @@ class Processor {
         int programCounter = 0;
         using (StreamReader reader = new StreamReader(inputPath)) {
 
-            string? line;
+            string line;
             int lineNumber = 0;
             while ((line = reader.ReadLine()) != null) {
                 lineNumber++;
 
-                (SourceLine[]? operations, bool isLabel) =
+                SourceLine[] operations;
+                bool isLabel = false;
+                (operations, isLabel) =
                     InitialPass.AnalyzeLine(line.Trim(), lineNumber, programCounter);
 
                 if (operations == null || operations.Length == 0) continue;
@@ -592,9 +595,9 @@ class Processor {
             int lineNumber = lines[i].LineNumber;
             int pc = lines[i].ProgramCounter;
             var elements = lines[i].Elements;
-            int? argOne = ToInteger(elements.ElementAtOrDefault(1),
+            Nullable<int> argOne = ToInteger(elements.ElementAtOrDefault(1),
                     elements[0], labelPositions, lineNumber, elements);
-            int? argTwo = ToInteger(elements.ElementAtOrDefault(2),
+            Nullable<int> argTwo = ToInteger(elements.ElementAtOrDefault(2),
                     elements[0], labelPositions, lineNumber, elements);
 
             // CGW: Resolve labels to memory addresses if applicable.
@@ -607,67 +610,135 @@ class Processor {
 
             // CGW: Match instructions using a switch expression.
             // RDP: Handle argument checking.
-            Instruction.IInstruction op = elements[0].ToLower() switch {
-                "exit" => new Instruction.Exit(argOne),
-                "swap" => new Instruction.Swap(argOne, argTwo),
-                "nop" => new Instruction.Nop(),
-                "debug" => new Instruction.Debug(argOne),
-                "pop" => new Instruction.Pop(validateAlign(argOne, elements,
-                            lineNumber)),
-                "input" => new Instruction.Input(),
-                "stinput" => new Instruction.StInput(argOne),
-                "add" => new Instruction.Add(),
-                "sub" => new Instruction.Sub(),
-                "mul" => new Instruction.Mul(),
-                "div" => new Instruction.Div(),
-                "rem" => new Instruction.Rem(),
-                "and" => new Instruction.And(),
-                "or" => new Instruction.Or(),
-                "xor" => new Instruction.Xor(),
-                "lsl" => new Instruction.Lsl(),
-                "lsr" => new Instruction.Lsr(),
-                "asr" => new Instruction.Asr(),
-                "neg" => new Instruction.Neg(),
-                "not" => new Instruction.Not(),
-                "push" => new Instruction.Push(argOne),
-                "dup" => new Instruction.Dup(validateAlign(argOne, elements,
-                            lineNumber)),
-                "stprint" => new Instruction.StPrint(argOne),
-                "call" => new Instruction.Call(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "return" => new Instruction.Return(validateAlign(argOne, elements,
-                            lineNumber)),
-                "goto" => new Instruction.Goto(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifeq" => new Instruction.Equals(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifne" => new Instruction.NotEquals(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "iflt" => new Instruction.LessThan(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifgt" => new Instruction.GreaterThan(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifle" => new Instruction.LessEquals(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifge" => new Instruction.GreaterEquals(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifez" => new Instruction.EqualsZero(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifnz" => new Instruction.NotEqualsZero(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifmi" => new Instruction.LessThanZero(validatePC(labelPositions,
-                            elements, lineNumber), pc),
-                "ifpl" => new
-                    Instruction.GreaterThanEqualZero(validatePC(labelPositions,
-                                elements, lineNumber), pc),
-                "dump" => new Instruction.Dump(),
-                "print" => new Instruction.Print(argOne, 'd'),
-                "printh" => new Instruction.Print(argOne, 'h'),
-                "printo" => new Instruction.Print(argOne, 'o'),
-                "printb" => new Instruction.Print(argOne, 'b'),
-                _ => throw new Exception($"Unimplemented operation {elements[0]}")
-            };
-
+            Instruction.IInstruction op;
+            switch (elements[0].ToLower()) {
+                case "exit":
+                    op = new Instruction.Exit(argOne);
+                    break;
+                case "swap":
+                    op = new Instruction.Swap(argOne, argTwo);
+                    break;
+                case "nop":
+                    op = new Instruction.Nop();
+                    break;
+                case "debug":
+                    op = new Instruction.Debug(argOne);
+                    break;
+                case "pop":
+                    op = new Instruction.Pop(validateAlign(argOne, elements, lineNumber));
+                    break;
+                case "input":
+                    op = new Instruction.Input();
+                    break;
+                case "stinput":
+                    op = new Instruction.StInput(argOne);
+                    break;
+                case "add":
+                    op = new Instruction.Add();
+                    break;
+                case "sub":
+                    op = new Instruction.Sub();
+                    break;
+                case "mul":
+                    op = new Instruction.Mul();
+                    break;
+                case "div":
+                    op = new Instruction.Div();
+                    break;
+                case "rem":
+                    op = new Instruction.Rem();
+                    break;
+                case "and":
+                    op = new Instruction.And();
+                    break;
+                case "or":
+                    op = new Instruction.Or();
+                    break;
+                case "xor":
+                    op = new Instruction.Xor();
+                    break;
+                case "lsl":
+                    op = new Instruction.Lsl();
+                    break;
+                case "lsr":
+                    op = new Instruction.Lsr();
+                    break;
+                case "asr":
+                    op = new Instruction.Asr();
+                    break;
+                case "neg":
+                    op = new Instruction.Neg();
+                    break;
+                case "not":
+                    op = new Instruction.Not();
+                    break;
+                case "push":
+                    op = new Instruction.Push(argOne);
+                    break;
+                case "dup":
+                    op = new Instruction.Dup(validateAlign(argOne, elements, lineNumber));
+                    break;
+                case "stprint":
+                    op = new Instruction.StPrint(argOne);
+                    break;
+                case "call":
+                    op = new Instruction.Call(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "return":
+                    op = new Instruction.Return(validateAlign(argOne, elements, lineNumber));
+                    break;
+                case "goto":
+                    op = new Instruction.Goto(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifeq":
+                    op = new Instruction.Equals(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifne":
+                    op = new Instruction.NotEquals(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "iflt":
+                    op = new Instruction.LessThan(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifgt":
+                    op = new Instruction.GreaterThan(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifle":
+                    op = new Instruction.LessEquals(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifge":
+                    op = new Instruction.GreaterEquals(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifez":
+                    op = new Instruction.EqualsZero(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifnz":
+                    op = new Instruction.NotEqualsZero(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifmi":
+                    op = new Instruction.LessThanZero(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "ifpl":
+                    op = new Instruction.GreaterThanEqualZero(validatePC(labelPositions, elements, lineNumber), pc);
+                    break;
+                case "dump":
+                    op = new Instruction.Dump();
+                    break;
+                case "print":
+                    op = new Instruction.Print(argOne, 'd');
+                    break;
+                case "printh":
+                    op = new Instruction.Print(argOne, 'h');
+                    break;
+                case "printo":
+                    op = new Instruction.Print(argOne, 'o');
+                    break;
+                case "printb":
+                    op = new Instruction.Print(argOne, 'b');
+                    break;
+                default:
+                    err($"Unknown instruction {elements[0]}", lineNumber);
+                    return;
+            }
             operationList.Add(op);
         }
 
