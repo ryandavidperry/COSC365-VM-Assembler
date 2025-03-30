@@ -217,11 +217,11 @@ namespace Instruction {
 
     // RDP: Encodes dup instruction with optional parameter
     public class Dup : IInstruction {
-        private readonly Nullable<int> _offset;
+        private Nullable<int> _offset;
         public Dup(Nullable<int> offset) {
-            _offset = offset & ~3;
+            _offset = (offset ?? 0) & ~3;
         }
-        public int Encode() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
+        public int Encode() => unchecked((int)((0b1100 << 28) | (_offset ?? 0) & 0x0FFFFFFF));
     }
 
     // RDP: Encodes stprint instruction with optional parameter.
@@ -258,7 +258,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0xFFFFFFC, 0x50000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x0FFFFFFF;
+
+            if ((offset & (1 << 27)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b0101;
+
+            int result = (opcode << 28) | (signExtendedOffset & 0x0FFFFFFF);
+  
+            return result;
         }
     }
 
@@ -279,7 +291,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x0FFFFFFF, 0x70000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x0FFFFFFF;
+
+            if ((offset & (1 << 27)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b0111;
+
+            int result = (opcode << 28) | (signExtendedOffset & 0x0FFFFFFF);
+  
+            return result;
         }
     }
 
