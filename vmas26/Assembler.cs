@@ -433,18 +433,17 @@ namespace Instruction {
             this.type = type;
         }
         public int Encode() {
-            // Truncate offset to multiple of 4
-            int process = offset - (offset % 4) ?? 0;
+            int process = (offset ?? 0) & ~3; // Ensure its a multiple of 4
 
             if (type == 'h') {
-                return unchecked((int)(0xD0000000 | (uint)process | 0x00000001));
+                return unchecked((int)(0xD0000000 | process | 0x00000001));
             } else if (type == 'b') {
-                return unchecked((int)(0xD0000000 | (uint)process | 0x00000002));
+                return unchecked((int)(0xD0000000 | process | 0x00000002));
             } else if (type == 'o') {
-                return unchecked((int)(0xD0000000 | (uint)process | 0x00000003));
+                return unchecked((int)(0xD0000000 | process | 0x00000003));
             }
 
-            return unchecked((int)(0xD0000000 | (uint)process));
+            return unchecked((int)(0xD0000000 | process));
         }
     }
 }
@@ -554,6 +553,12 @@ class Processor {
 
         string inputPath = args[0];
         string outputPath = args[1];
+
+        // Check if input file exists
+        if (!File.Exists(inputPath)) {
+            Console.WriteLine($"{args[0]}: File not found");
+            Environment.Exit(1);
+        }
 
         Dictionary<string, int> labelPositions = new Dictionary<string, int>();
         List<SourceLine> lines = new List<SourceLine>();
