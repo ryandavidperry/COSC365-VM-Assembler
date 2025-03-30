@@ -8,10 +8,10 @@ Create issues for each part of the project you are working on so mutliple people
 - [ ] stprint on negative number
 
 # Testing
-- [o] Ensure instructions that take a signed integer can process negative values
+- [x] Ensure instructions that take a signed integer can process negative values
     - [X] swap
     - [X] print
-    - [ ] stprint
+    - [X] stprint
     - [X] push
     - [X] goto
 
