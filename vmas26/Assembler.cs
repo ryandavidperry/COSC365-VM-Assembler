@@ -434,16 +434,18 @@ namespace Instruction {
         }
         public int Encode() {
             int process = (offset ?? 0) & ~3; // Ensure its a multiple of 4
+            int encodedOffset = (process >> 2) & 0x03FFFFFF;
+            encodedOffset <<= 2;
 
             if (type == 'h') {
-                return unchecked((int)(0xD0000000 | process | 0x00000001));
+                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000001));
             } else if (type == 'b') {
-                return unchecked((int)(0xD0000000 | process | 0x00000002));
+                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000002));
             } else if (type == 'o') {
-                return unchecked((int)(0xD0000000 | process | 0x00000003));
+                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000003));
             }
 
-            return unchecked((int)(0xD0000000 | process));
+            return unchecked((int)(0xD0000000 | encodedOffset));
         }
     }
 }
