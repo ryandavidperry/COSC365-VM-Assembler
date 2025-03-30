@@ -1,3 +1,13 @@
+/* Names:       Ryan Anderson, Thomas Latawiec, 
+ *              Ryan Perry, Chase Woodfill
+ *
+ * Date:        04/04/2025
+ *
+ * Synopsis:    Implements a two-pass assembler for 
+ *              the COSC365  virtual machine (vMach)
+ */
+
+
 using System;
 using System.Linq;
 using System.IO;
