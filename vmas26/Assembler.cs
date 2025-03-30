@@ -171,22 +171,6 @@ namespace Instruction {
 
     // CGW: Represents a Swap instruction with two optional parameters.
     public class Swap : IInstruction {
-        /*
-        private Nullable<int> first, second;
-        public Swap(Nullable<int> first, Nullable<int> second) {
-            this.first = first;
-            this.second = second;
-        }
-        public int Encode() {
-            int fromVal = (first ?? 4);
-            int toVal = (second ?? 0);
-
-            int encodedFrom = (fromVal >> 2) & 0xFFF;
-            int encodedTo = (toVal >> 2) & 0xFF;
-
-            return unchecked(0x01000000 | (encodedFrom << 12) | encodedTo);
-        }
-        */
         private int from, to;
 
         public Swap(Nullable<int> first, Nullable<int> second) {
