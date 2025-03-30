@@ -176,7 +176,7 @@ namespace Instruction {
             this.first = first;
             this.second = second;
         }
-        public int Encode() => unchecked((int)(0x01000000 | ((first ?? 4) << 12) | (second ?? 0)));
+        public int Encode() => unchecked((int)(0x01000000 | ((first ?? 4) & 0xFFF) << 12 | ((second ?? 0) & 0xFFF)));
     }
 
     // CGW: Represents a simple Input instruction.
@@ -438,14 +438,14 @@ namespace Instruction {
             encodedOffset <<= 2;
 
             if (type == 'h') {
-                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000001));
+                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000001));
             } else if (type == 'b') {
-                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000002));
+                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000002));
             } else if (type == 'o') {
-                return unchecked((int)(0xD0000000 | encodedOffset | 0x00000003));
+                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000003));
             }
 
-            return unchecked((int)(0xD0000000 | encodedOffset));
+            return unchecked((int)(0xD0000000 | (uint)encodedOffset));
         }
     }
 }
