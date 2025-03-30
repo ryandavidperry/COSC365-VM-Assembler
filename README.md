@@ -4,6 +4,8 @@ Create issues for each part of the project you are working on so mutliple people
 
 # Bug Fixes
 - [ ] Swap Instruction
+- [ ] Print Instruction
+- [ ] Binary If Instructions
 
 # Testing
 - [x] Ensure instructions that take a signed integer can process negative values
