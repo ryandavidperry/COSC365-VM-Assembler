@@ -5,6 +5,15 @@ Create issues for each part of the project you are working on so mutliple people
 # Bug Fixes
 - [X] call.asm
 - [X] swap.asm
+- [ ] stprint on negative number
+
+# Testing
+- [o] Ensure instructions that take a signed integer can process negative values
+    - [X] swap
+    - [X] print
+    - [ ] stprint
+    - [X] push
+    - [X] goto
 
 # Instructions
 - [X] Miscellaneous
