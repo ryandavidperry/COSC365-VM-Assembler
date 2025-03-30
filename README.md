@@ -3,9 +3,7 @@
 Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
 
 # Bug Fixes
-- [X] call.asm
-- [X] swap.asm
-- [ ] stprint on negative number
+- [ ] Swap Instruction
 
 # Testing
 - [x] Ensure instructions that take a signed integer can process negative values
