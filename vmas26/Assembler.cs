@@ -133,22 +133,6 @@ static class InitialPass {
     }
 }
 
-public class Encoder {
-
-    // RDP: PC-Relative Offset Helper
-    public static int PCRelative(Nullable<int> target, int pc, int mask, uint opcode) {
-
-        // Calculate the PC-Relative Offset
-        int pcRelativeOffset = target.GetValueOrDefault() - pc;
-
-        // Apply the mask to align the offset
-        int offset = (int)(pcRelativeOffset & mask);
-
-        // Combine the base opcode with the offset
-        return unchecked((int)((int)opcode | offset));
-    }
-}
-
 // CGW: Prototyping
 namespace Instruction {
 
@@ -471,7 +455,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x90000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x01FFFFFF;
+
+            if ((offset & (1 << 24)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b1001000;
+
+            int result = (opcode << 25) | (signExtendedOffset & 0x01FFFFFF);
+
+            return result;
         }
     }
 
@@ -484,7 +480,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x92000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x01FFFFFF;
+
+            if ((offset & (1 << 24)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b1001001;
+
+            int result = (opcode << 25) | (signExtendedOffset & 0x01FFFFFF);
+
+            return result;
         }
     }
 
@@ -497,7 +505,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x94000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x01FFFFFF;
+
+            if ((offset & (1 << 24)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b1001010;
+
+            int result = (opcode << 25) | (signExtendedOffset & 0x01FFFFFF);
+
+            return result;
         }
     }
 
@@ -510,7 +530,19 @@ namespace Instruction {
             this.pc = pc;
         }
         public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x96000000);
+            int offset = (int)target - pc;
+
+            int signExtendedOffset = offset & 0x01FFFFFF;
+
+            if ((offset & (1 << 24)) != 0) {
+                signExtendedOffset |= unchecked((int)0xFE000000);
+            }
+
+            int opcode = 0b1001011;
+
+            int result = (opcode << 25) | (signExtendedOffset & 0x01FFFFFF);
+
+            return result;
         }
     }
 
