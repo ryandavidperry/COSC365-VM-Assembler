@@ -3,8 +3,7 @@
 Create issues for each part of the project you are working on so mutliple people are not working on the same thing.
 
 # Bug Fixes
-- [ ] Swap Instruction
-- [ ] Print Instruction
+- [X] Swap Instruction
 - [ ] Binary If Instructions
 
 # Testing
