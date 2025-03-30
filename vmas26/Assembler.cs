@@ -166,7 +166,9 @@ namespace Instruction {
     public class Exit : IInstruction {
         private Nullable<int> value;
         public Exit(Nullable<int> value) => this.value = value;
-        public int Encode() => unchecked((int)(0x00000000 | (value ?? 0)));
+        public int Encode() {
+            return unchecked((int)((uint)(value ?? 0) & 0xFF));
+        }
     }
 
     // CGW: Represents a Swap instruction with two optional parameters.
