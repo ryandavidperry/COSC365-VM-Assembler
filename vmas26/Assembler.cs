@@ -1,110 +1,166 @@
-﻿// Assembler!
-
-using System;
+﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
-class Assembler {
+// CGW: Prototyping
+class SourceLine {
+    public string OriginalText { get; set; }
+    public string[] Elements { get; set; }
+    public SourceLine(string line) {
+        OriginalText = line;
+        Elements = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    }
+}
 
-    /* 
-     * Prepares output file for the second pass.
-     *
-     * Returns a dictionary of labels and their correpsonding memory location
-     * and line number. Dictionary is of the form:
-     *      Key - label, Value - (memory location, line number)
-     */
-    public static Dictionary<string, (int address, int lineNumber)> 
-        FirstPass(string InputFile, string OutputFile) {
-        var labels = new Dictionary<string, (int, int)>(); 
-        int pc = 0;
-        int lineNumber = 0;
+// CGW: Prototyping
+static class InitialPass {
+    public static (SourceLine[]?, bool) AnalyzeLine(string line) {
 
-        using (StreamWriter sw = new StreamWriter(OutputFile)) {
-            foreach (string dirtyLine in File.ReadLines(InputFile)) {
-                lineNumber++;
+        // CGW: If a line ends with a colon, it's considered a label.
+        if (line.EndsWith(":")) {
+            return (new[] { new SourceLine(line) }, true);
+        }
+        return (new[] { new SourceLine(line) }, false);
+    }
+}
 
-                // Remove inline comments (e.g., 'push 0   # comment')
-                string line = dirtyLine.Split('#')[0].Trim();
+// CGW: Prototyping 
+namespace Instruction {
 
-                // Remove empty lines and lines that contain only a comment
-                if (string.IsNullOrEmpty(line)) {
-                    continue;
-                }
+    // CGW: Interface representing a generic instruction with a Generate method.
+    public interface IInstruction {
+        int Generate();
+    }
 
-                // Handles extra white space (e.g., 'push       10')
-                line = string.Join(" ", line.Split(' ',
-                                        StringSplitOptions.RemoveEmptyEntries));
+    // CGW: Represents a NOP (No Operation) instruction.
+    public class Nop : IInstruction {
+        public int Generate() => 0x00000000;
+    }
 
-                if (line.EndsWith(':')) {
-                    // Add label to dictionary
-                    string label = line.TrimEnd(':');
+    // CGW: Represents an Exit instruction, optionally using a value parameter.
+    public class Exit : IInstruction {
+        private int? value;
+        public Exit(int? value) => this.value = value;
+        public int Generate() => unchecked((int)(0x11110000 | (value ?? 0)));
+    }
 
-                    // Check for duplicate labels
-                    if (labels.ContainsKey(label)) {
-                        Console.WriteLine($"{lineNumber}: " + 
-                                          $"Label already exists: {label}");
-                        sw.Close();
-                        File.Delete(OutputFile);
+    // CGW: Represents a Swap instruction with two optional parameters.
+    public class Swap : IInstruction {
+        private int? first, second;
+        public Swap(int? first, int? second) {
+            this.first = first;
+            this.second = second;
+        }
+        public int Generate() => unchecked((int)(0x22220000 | ((first ?? 0) << 8) | (second ?? 0)));
+    }
+
+    // CGW: Represents a simple Input instruction.
+    public class Input : IInstruction {
+        public int Generate() => unchecked((int)0x33330000);
+    }
+
+    // CGW: Represents a StInput instruction with a parameter.
+    public class StInput : IInstruction {
+        private int? value;
+        public StInput(int? value) => this.value = value;
+        public int Generate() => unchecked((int)(0x44440000 | (value ?? 0)));
+    }
+
+    // CGW: Debug help.
+    public class Debug : IInstruction {
+        private int? value;
+        public Debug(int? value) => this.value = value;
+        public int Generate() => unchecked((int)(0x55550000 | (value ?? 0)));
+    }
+
+    // CGW: Represents a Pop instruction, removing an item from the stack.
+    public class Pop : IInstruction {
+        private int? value;
+        public Pop(int? value) => this.value = value;
+        public int Generate() => unchecked((int)(0x66660000 | (value ?? 0)));
+    }
+
+    // CGW: Arithmetic operation instructions.
+    public class Add : IInstruction { public int Generate() => unchecked((int)0x77770000); }
+    public class Sub : IInstruction { public int Generate() => unchecked((int)0x88880000); }
+    public class Mul : IInstruction { public int Generate() => unchecked((int)0x99990000); }
+    public class Div : IInstruction { public int Generate() => unchecked((int)0xAAAA0000); }
+    public class Rem : IInstruction { public int Generate() => unchecked((int)0xBBBB0000); }
+    public class And : IInstruction { public int Generate() => unchecked((int)0xCCCC0000); }
+}
+
+// CGW: Utility class for safe conversion of strings to integers.
+static class Converter {
+    public static int? ToInteger(string? input) {
+        return int.TryParse(input, out int result) ? result : (int?)null;
+    }
+}
+
+// CGW: Main processor class for the assembler.
+class Processor {
+    public static void Main(string[] args) {
+        
+        // CGW: Validate command-line arguments.
+        if (args.Length != 2) {
+            Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <file.asm> <file.v>");
+            Environment.Exit(1);
+        }
+
+        string inputPath = args[0];
+        string outputPath = args[1];
+
+        Dictionary<string, int> labelPositions = new Dictionary<string, int>();
+        List<SourceLine> lines = new List<SourceLine>();
+
+        // CGW: First Pass - Identify labels and calculate memory addresses.
+        int programCounter = 0;
+        using (StreamReader reader = new StreamReader(inputPath)) {
+            string? line;
+            while ((line = reader.ReadLine()) != null) {
+                (SourceLine[]? operations, bool isLabel) = InitialPass.AnalyzeLine(line.Trim());
+                if (operations == null || operations.Length == 0) continue;
+
+                if (isLabel) {
+                    string labelName = operations[0].OriginalText.TrimEnd(':');
+                    if (labelPositions.ContainsKey(labelName)) {
+                        Console.WriteLine($"Error: Duplicate label '{labelName}' detected at address {programCounter}");
                         Environment.Exit(1);
                     }
-
-                    labels[label] = (pc, lineNumber);
+                    labelPositions[labelName] = programCounter;
                 } else {
-                    if (line.StartsWith("stpush ")) {
-                        int start = line.IndexOf('"');
-                        int end = line.LastIndexOf('"');
-
-                        if (start != -1 && end > start) {
-                            string words = line.Substring(start + 1,
-                                                          end - start - 1);
-                            /* 
-                             * Words are rounded up (+3) to ensure alignment, and 
-                             * the null terminator takes up one additional byte (+1)
-                             */
-                            int numWords = (words.Length + 3 + 1) / 4; 
-                            pc += numWords * 4;
-                        } else {
-                            // Invalid stpush syntax
-                            Console.WriteLine($"{lineNumber}: " + 
-                                            $"Malformed string (unterminated \"?)");
-                            sw.Close();
-                            File.Delete(OutputFile);
-                            Environment.Exit(1);
-                        }
-                    } else {
-                        // Non-labels increment program counter
-                        pc += 4;
-                    }
-                    sw.WriteLine(line);
+                    programCounter += operations.Length * 4;
+                    lines.AddRange(operations);
                 }
             }
         }
-        return labels;
-    }
 
-    public static void Main(string[] args) {
-        // Check arguments
-        if (args.Length < 2) {
-            Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} " +
-                               "<file.asm> <file.v>");
-            return;
+        // CGW: Second Pass - Generate machine code from instructions.
+        List<Instruction.IInstruction> operationList = new List<Instruction.IInstruction>();
+        for (int i = 0; i < lines.Count; i++) {
+            var elements = lines[i].Elements;
+            int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1));
+            int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2));
+
+            // CGW: Resolve labels to memory addresses if applicable.
+            if (elements.Length > 1 && labelPositions.ContainsKey(elements[1])) {
+                argOne = labelPositions[elements[1]];
+            }
+            if (elements.Length > 2 && labelPositions.ContainsKey(elements[2])) {
+                argTwo = labelPositions[elements[2]];
+            }
+
+            // CGW: Match instructions using a switch expression.
+            Instruction.IInstruction op = elements[0].ToLower() switch {
+                "exit" => new Instruction.Exit(argOne),
+                "swap" => new Instruction.Swap(argOne, argTwo),
+                "nop" => new Instruction.Nop(),
+                _ => throw new Exception($"Unimplemented operation {elements[0]}")
+            };
+
+            operationList.Add(op);
         }
 
-        string InputFile = args[0];
-        string OutputFile = args[1];
-
-        // Check if input file exists
-        if (!File.Exists(InputFile)) {
-            Console.WriteLine($"{args[0]}: File not found");
-            return;
-        }
-
-        var labels = FirstPass(InputFile, OutputFile);
-
-        // Output contents of dictionary for visualization
-        foreach (var entry in labels) {
-            Console.WriteLine($"label:   {entry.Key}\n" +
-                              $"mem loc: {entry.Value.address}\n" +
-                              $"line:    {entry.Value.lineNumber}\n");
-        }
+        Console.WriteLine("Assembly completed successfully.");
     }
 }
+
