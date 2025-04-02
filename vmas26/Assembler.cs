@@ -45,6 +45,22 @@ static class InitialPass {
     }
 }
 
+public class Encoder {
+
+    // RDP: PC-Relative Offset Helper
+    public static int PCRelative(int? target, int pc, int mask, uint opcode) {
+
+        // Calculate the PC-Relative Offset
+        int pcRelativeOffset = target.GetValueOrDefault() - pc;
+
+        // Apply the mask to align the offset
+        int offset = (int)(pcRelativeOffset & mask);
+
+        // Combine the base opcode with the offset
+        return unchecked((int)((int)opcode | offset));
+    }
+}
+
 // CGW: Prototyping 
 namespace Instruction {
 
@@ -140,13 +156,16 @@ namespace Instruction {
     // The argument is checked before passing it to the instruction,
     // therefore the value is not acutally optional as it appears here.
     public class Call : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Call(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0xFFFFFFC);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x50000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0xFFFFFFC, 0x50000000);
+        }
     }
 
     // RDP: Encodes return instruction with optional parameter.
@@ -158,13 +177,16 @@ namespace Instruction {
 
     // RDP: Encodes goto instruction
     public class Goto : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Goto(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x0FFFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x70000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x0FFFFFFF, 0x70000000);
+        }
     }
 
     // CGW: Push instruction prototype, needs testing.
@@ -180,104 +202,134 @@ namespace Instruction {
 
     // RDP: Binary If instructions
     public class Equals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public Equals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x80000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x80000000);
+        }
     }
 
     public class NotEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public NotEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x82000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x82000000);
+        }
     }
 
     public class LessThan : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessThan(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x84000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x84000000);
+        }
     }
 
     public class GreaterThan : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterThan(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x86000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x86000000);
+        }
     }
 
     public class LessEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x88000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x88000000);
+        }
     }
 
     public class GreaterEquals : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterEquals(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x8A000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x8A000000);
+        }
     }
 
     // RDP: Unary If instructions
     public class EqualsZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public EqualsZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x90000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x90000000);
+        }
     }
     
     public class NotEqualsZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public NotEqualsZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x92000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x92000000);
+        }
     }
 
     public class LessThanZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public LessThanZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x94000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x94000000);
+        }
     }
 
     public class GreaterThanEqualZero : IInstruction {
-        private int offset;
+        private int? target;
+        private int pc;
 
         public GreaterThanEqualZero(int? target, int pc) {
-            int pcRelativeOffset = target.GetValueOrDefault() - pc;
-            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+            this.target = target;
+            this.pc = pc;
         }
-        public int Encode() => unchecked((int)(0x96000000 | offset));
+        public int Encode() {
+            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x96000000);
+        }
     }
 
 }
@@ -303,6 +355,33 @@ static class Converter {
 
 // CGW: Main processor class for the assembler.
 class Processor {
+
+    // RDP: Check first argument of PC-Relative Instruction
+    private static int? validatePC(Dictionary<string, int> labelPositions,
+            string[] elements, int lineNumber) {
+
+        // Check if argument exists
+        if (elements.Length <= 1) {
+            err($"no label given for {elements[0]} statement.", lineNumber);
+        }
+        // Check if label is in labelPositions
+        if (!labelPositions.ContainsKey(elements[1])) {
+            err($"Invalid label: The given key '{elements[1]}' " +
+                 "was not present in the dictionary.", lineNumber);
+        }
+        return labelPositions[elements[1]];
+    }
+
+    // RDP: Check that first argument is a multiple of 4 to ensure alignment
+    private static int? validateAlign(int? arg, string[] elements, int
+            lineNumber) {
+
+        // Check that argument exists and is divisible by 4
+        if (arg.HasValue && arg % 4 != 0) {
+            err($"offsets to {elements[0]} must be multiples of 4.", lineNumber);
+        }
+        return arg;
+    }
 
     // RDP: Validates condition
     private static bool checkArgs(bool cond, string ?msg, int lineNumber) {
@@ -387,9 +466,8 @@ class Processor {
                 "swap" => new Instruction.Swap(argOne, argTwo),
                 "nop" => new Instruction.Nop(),
                 "debug" => new Instruction.Debug(argOne),
-                "pop" => new Instruction.Pop(checkArgs(argOne % 4 == 0 ||
-                        !argOne.HasValue,  "offset to pop() is not a multiple of 4.",
-                        lineNumber) ? argOne : null),
+                "pop" => new Instruction.Pop(validateAlign(argOne, elements,
+                            lineNumber)),
                 "input" => new Instruction.Input(),
                 "stinput" => new Instruction.StInput(argOne),
                 "add" => new Instruction.Add(),
@@ -406,97 +484,35 @@ class Processor {
                 "neg" => new Instruction.Neg(),
                 "not" => new Instruction.Not(),
                 "push" => new Instruction.Push(argOne),
-                "dup" => new Instruction.Dup(checkArgs(argOne % 4 == 0 ||
-                        !argOne.HasValue, "offsets to dup must be multiples of 4.",
-                        lineNumber) ? argOne : null),
+                "dup" => new Instruction.Dup(validateAlign(argOne, elements,
+                            lineNumber)),
                 "stprint" => new Instruction.StPrint(argOne),
-                "call" => new Instruction.Call(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for call statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "return" => new Instruction.Return(checkArgs(argOne % 4 == 0 || 
-                        !argOne.HasValue, "offset to return is not a multiple of 4.", 
-                        lineNumber) ? argOne : null),
-                "goto" => new Instruction.Goto(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifeq" => new Instruction.Equals(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifeq statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifne" => new Instruction.NotEquals(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifne statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "iflt" => new Instruction.LessThan(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for iflt statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifgt" => new Instruction.GreaterThan(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifgt statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifle" => new Instruction.LessEquals(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifle statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifge" => new Instruction.GreaterEquals(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifge statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifez" => new Instruction.EqualsZero(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifez statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifnz" => new Instruction.NotEqualsZero(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifnz statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifmi" => new Instruction.LessThanZero(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifmi statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
-                "ifpl" => new Instruction.GreaterThanEqualZero(
-                        checkArgs(elements.Length > 1, 
-                            "no label given for ifpl statement.", lineNumber) && 
-                        checkArgs(labelPositions.ContainsKey(elements[1]), 
-                            "Invalid label: The given key '" + elements[1] + 
-                            "' was not present in the dictionary.", lineNumber) 
-                        ? argOne : null, pc),
+                "call" => new Instruction.Call(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "return" => new Instruction.Return(validateAlign(argOne, elements,
+                            lineNumber)),
+                "goto" => new Instruction.Goto(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifeq" => new Instruction.Equals(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifne" => new Instruction.NotEquals(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "iflt" => new Instruction.LessThan(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifgt" => new Instruction.GreaterThan(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifle" => new Instruction.LessEquals(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifge" => new Instruction.GreaterEquals(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifez" => new Instruction.EqualsZero(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifnz" => new Instruction.NotEqualsZero(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifmi" => new Instruction.LessThanZero(validatePC(labelPositions,
+                            elements, lineNumber), pc),
+                "ifpl" => new Instruction.GreaterThanEqualZero(validatePC(labelPositions,
+                            elements, lineNumber), pc),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
