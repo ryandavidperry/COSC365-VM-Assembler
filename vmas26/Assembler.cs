@@ -46,21 +46,21 @@ static class InitialPass {
 // CGW: Prototyping 
 namespace Instruction {
 
-    // CGW: Interface representing a generic instruction with a Generate method.
+    // CGW: Interface representing a generic instruction with a Encode method.
     public interface IInstruction {
-        int Generate();
+        int Encode();
     }
 
     // CGW: Represents a NOP (No Operation) instruction.
     public class Nop : IInstruction {
-        public int Generate() => 0x02000000;
+        public int Encode() => 0x02000000;
     }
 
     // CGW: Represents an Exit instruction, optionally using a value parameter.
     public class Exit : IInstruction {
         private int? value;
         public Exit(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x00000000 | (value ?? 0)));
+        public int Encode() => unchecked((int)(0x00000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Swap instruction with two optional parameters.
@@ -70,53 +70,53 @@ namespace Instruction {
             this.first = first;
             this.second = second;
         }
-        public int Generate() => unchecked((int)(0x01000000 | ((first ?? 4) << 12) | (second ?? 0)));
+        public int Encode() => unchecked((int)(0x01000000 | ((first ?? 4) << 12) | (second ?? 0)));
     }
 
     // CGW: Represents a simple Input instruction.
     public class Input : IInstruction {
-        public int Generate() => unchecked((int)0x04000000);
+        public int Encode() => unchecked((int)0x04000000);
     }
 
     // CGW: Represents a StInput instruction with a parameter.
     public class StInput : IInstruction {
         private int? value;
         public StInput(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x05000000 | (value ?? 0xFFFFFF)));
+        public int Encode() => unchecked((int)(0x05000000 | (value ?? 0xFFFFFF)));
     }
 
     // CGW: Debug help.
     public class Debug : IInstruction {
         private int? value;
         public Debug(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x0F000000 | (value ?? 0)));
+        public int Encode() => unchecked((int)(0x0F000000 | (value ?? 0)));
     }
 
     // CGW: Represents a Pop instruction, removing an item from the stack.
     public class Pop : IInstruction {
         private int? value;
         public Pop(int? value) => this.value = value;
-        public int Generate() => unchecked((int)(0x10000000 | (value ?? 4))); 
+        public int Encode() => unchecked((int)(0x10000000 | (value ?? 4))); 
     }
 
     // CGW: Arithmetic operation instructions.
-    public class Add : IInstruction { public int Generate() => unchecked((int)0x20000000); }
-    public class Sub : IInstruction { public int Generate() => unchecked((int)0x21000000); }
-    public class Mul : IInstruction { public int Generate() => unchecked((int)0x22000000); }
-    public class Div : IInstruction { public int Generate() => unchecked((int)0x23000000); }
-    public class Rem : IInstruction { public int Generate() => unchecked((int)0x24000000); }
-    public class And : IInstruction { public int Generate() => unchecked((int)0x25000000); }
+    public class Add : IInstruction { public int Encode() => unchecked((int)0x20000000); }
+    public class Sub : IInstruction { public int Encode() => unchecked((int)0x21000000); }
+    public class Mul : IInstruction { public int Encode() => unchecked((int)0x22000000); }
+    public class Div : IInstruction { public int Encode() => unchecked((int)0x23000000); }
+    public class Rem : IInstruction { public int Encode() => unchecked((int)0x24000000); }
+    public class And : IInstruction { public int Encode() => unchecked((int)0x25000000); }
 
     // RDP: Arithmetic operations instructions
-    public class Or : IInstruction { public int Generate() => unchecked((int)0x26000000); }
-    public class Xor : IInstruction { public int Generate() => unchecked((int)0x27000000); }
-    public class Lsl : IInstruction { public int Generate() => unchecked((int)0x28000000); }
-    public class Lsr : IInstruction { public int Generate() => unchecked((int)0x29000000); }
-    public class Asr : IInstruction { public int Generate() => unchecked((int)0x2B000000); }
+    public class Or : IInstruction { public int Encode() => unchecked((int)0x26000000); }
+    public class Xor : IInstruction { public int Encode() => unchecked((int)0x27000000); }
+    public class Lsl : IInstruction { public int Encode() => unchecked((int)0x28000000); }
+    public class Lsr : IInstruction { public int Encode() => unchecked((int)0x29000000); }
+    public class Asr : IInstruction { public int Encode() => unchecked((int)0x2B000000); }
 
     // RDP: Unary arithmetic instructions
-    public class Neg : IInstruction { public int Generate() => unchecked((int)0x30000000); }
-    public class Not : IInstruction { public int Generate() => unchecked((int)0x31000000); }
+    public class Neg : IInstruction { public int Encode() => unchecked((int)0x30000000); }
+    public class Not : IInstruction { public int Encode() => unchecked((int)0x31000000); }
 
     // RDP: Encodes dup instruction with optional parameter
     public class Dup : IInstruction {
@@ -124,7 +124,14 @@ namespace Instruction {
         public Dup(int? offset) {
             _offset = offset & ~3;
         }
-        public int Generate() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
+        public int Encode() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
+    }
+
+    // RDP: Encodes stprint instruction with optional parameter
+    public class StPrint : IInstruction {
+        private int? value;
+        public StPrint(int? value) => this.value = value;
+        public int Encode() => unchecked((int)(0x40000000 | (value ?? 0)));
     }
 }
 
@@ -209,7 +216,7 @@ class Processor {
             }
         }
 
-        // CGW: Second Pass - Generate machine code from instructions.
+        // CGW: Second Pass - Encode machine code from instructions.
         List<Instruction.IInstruction> operationList = new List<Instruction.IInstruction>();
         for (int i = 0; i < lines.Count; i++) {
             int lineNumber = lines[i].LineNumber;
@@ -252,6 +259,7 @@ class Processor {
                 "dup" => new Instruction.Dup(checkArgs(argOne % 4 == 0 ||
                         !argOne.HasValue, "offsets to dup must be multiples of 4.",
                         lineNumber) ? argOne : null),
+                "stprint" => new Instruction.StPrint(argOne),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
@@ -265,7 +273,7 @@ class Processor {
             bw.Write(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
 
             foreach (var op in operationList) {
-                int objectCode = op.Generate();
+                int objectCode = op.Encode();
                 bw.Write(objectCode);
             }
 
