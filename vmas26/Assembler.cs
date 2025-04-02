@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -166,6 +166,18 @@ namespace Instruction {
         }
         public int Encode() => unchecked((int)(0x70000000 | offset));
     }
+
+    // CGW: Push instruction prototype, needs testing.
+    public class Push : IInstruction {
+    private readonly int _operand;
+    public Push(int? inputValue = 0) {
+        _operand = inputValue ?? 0;
+    }
+    public int Encode() {
+        return (0b1111 << 28) | (_operand & 0x0FFFFFFF);
+    }
+}
+
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -311,7 +323,8 @@ class Processor {
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
-                _ => throw new Exception($"Unimplemented operation {elements[0]}")
+                "push" => new Instruction.Push(argOne),
+                _ => throw new Exception($"Unimplemented operation {elements[0]}"),
             };
 
             operationList.Add(op);
@@ -338,4 +351,3 @@ class Processor {
         Console.WriteLine("Assembly completed successfully.");
     }
 }
-
