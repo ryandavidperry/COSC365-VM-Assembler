@@ -44,6 +44,7 @@ Create issues for each part of the project you are working on so mutliple people
     - [X] mi
     - [X] pl
 - [ ] print
+- [ ] stprint
 - [X] dump
 - [X] push
 - [ ] stpush
