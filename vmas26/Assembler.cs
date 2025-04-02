@@ -228,6 +228,47 @@ namespace Instruction {
         public int Encode() => unchecked((int)(0x8A000000 | offset));
     }
 
+    // RDP: Unary If instructions
+    public class EqualsZero : IInstruction {
+        private int offset;
+
+        public EqualsZero(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x90000000 | offset));
+    }
+    
+    public class NotEqualsZero : IInstruction {
+        private int offset;
+
+        public NotEqualsZero(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x92000000 | offset));
+    }
+
+    public class LessThanZero : IInstruction {
+        private int offset;
+
+        public LessThanZero(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x94000000 | offset));
+    }
+
+    public class GreaterThanEqualZero : IInstruction {
+        private int offset;
+
+        public GreaterThanEqualZero(int? target, int pc) {
+            int pcRelativeOffset = target.GetValueOrDefault() - pc;
+            offset = (int)(pcRelativeOffset & 0x00FFFFFF);
+        }
+        public int Encode() => unchecked((int)(0x96000000 | offset));
+    }
+
 }
 
 // CGW: Utility class for safe conversion of strings to integers.
@@ -376,42 +417,70 @@ class Processor {
                         ? argOne : null, pc),
                 "ifeq" => new Instruction.Equals(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for ifeq statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
                 "ifne" => new Instruction.NotEquals(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for ifne statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
                 "iflt" => new Instruction.LessThan(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for iflt statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
                 "ifgt" => new Instruction.GreaterThan(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for ifgt statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
                 "ifle" => new Instruction.LessEquals(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for ifle statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
                         ? argOne : null, pc),
                 "ifge" => new Instruction.GreaterEquals(
                         checkArgs(elements.Length > 1, 
-                            "no label given for goto statement.", lineNumber) && 
+                            "no label given for ifge statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifez" => new Instruction.EqualsZero(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for ifez statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifnz" => new Instruction.NotEqualsZero(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for ifnz statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifmi" => new Instruction.LessThanZero(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for ifmi statement.", lineNumber) && 
+                        checkArgs(labelPositions.ContainsKey(elements[1]), 
+                            "Invalid label: The given key '" + elements[1] + 
+                            "' was not present in the dictionary.", lineNumber) 
+                        ? argOne : null, pc),
+                "ifpl" => new Instruction.GreaterThanEqualZero(
+                        checkArgs(elements.Length > 1, 
+                            "no label given for ifpl statement.", lineNumber) && 
                         checkArgs(labelPositions.ContainsKey(elements[1]), 
                             "Invalid label: The given key '" + elements[1] + 
                             "' was not present in the dictionary.", lineNumber) 
