@@ -117,6 +117,15 @@ namespace Instruction {
     // RDP: Unary arithmetic instructions
     public class Neg : IInstruction { public int Generate() => unchecked((int)0x30000000); }
     public class Not : IInstruction { public int Generate() => unchecked((int)0x31000000); }
+
+    // RDP: Encodes dup instruction with optional parameter
+    public class Dup : IInstruction {
+        private readonly int? _offset;
+        public Dup(int? offset) {
+            _offset = offset & ~3;
+        }
+        public int Generate() => unchecked((int)((0b1100 << 28) | (_offset ?? 0)));
+    }
 }
 
 
@@ -124,7 +133,7 @@ namespace Instruction {
 // RDP: Supports hexadecimal values
 static class Converter {
     public static int? ToInteger(string? input) {
-        if (string.IsNullOrEmpty(input)) return null;
+        if (string.IsNullOrEmpty(input)) return (int?)null;
 
         if (input.StartsWith("0x")) {
             if (int.TryParse(input.Substring(2),
@@ -135,7 +144,7 @@ static class Converter {
         } else if (int.TryParse(input, out int result)) {
             return result;
         }
-        return null;
+        return (int?)null;
     }
 }
 
@@ -240,6 +249,9 @@ class Processor {
                 "asr" => new Instruction.Asr(),
                 "neg" => new Instruction.Neg(),
                 "not" => new Instruction.Not(),
+                "dup" => new Instruction.Dup(checkArgs(argOne % 4 == 0 ||
+                        !argOne.HasValue, "offsets to dup must be multiples of 4.",
+                        lineNumber) ? argOne : null),
                 _ => throw new Exception($"Unimplemented operation {elements[0]}")
             };
 
