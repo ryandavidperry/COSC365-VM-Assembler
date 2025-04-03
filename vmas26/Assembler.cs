@@ -1,4 +1,4 @@
-﻿﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -19,7 +19,8 @@ class SourceLine {
 
 // CGW: Prototyping
 static class InitialPass {
-    public static (SourceLine[]?, bool) AnalyzeLine(string line, int lineNumber, int programCounter) {
+    public static (SourceLine[]?, bool) AnalyzeLine(string line, int
+            lineNumber, int programCounter) {
         // RDP: Handle empty lines and comments
 
         // Trim whitespace
@@ -37,9 +38,89 @@ static class InitialPass {
         // Ignore empty lines
         if (string.IsNullOrEmpty(line)) return (null, false);
 
+        string[] elements = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
         // CGW: If a line ends with a colon, it's considered a label.
         if (line.EndsWith(":")) {
             return (new[] { new SourceLine(line, lineNumber, programCounter) }, true);
+        }
+
+        // RDP: Handle stpush instruction
+        if (elements.Length > 1 && elements[0] == "stpush") {
+            string content = line.Substring(line.IndexOf('"'));
+
+            // Check quotation marks
+            if (content == "\"" || !content.EndsWith("\"")) {
+                Console.WriteLine($"{lineNumber}: Malformed string (unterminated \"?)");
+                Environment.Exit(1);
+            }
+
+            // Check stpush string length
+            if (content.Length <= 2) {
+                Console.WriteLine($"{lineNumber}: No string to push.");
+                Environment.Exit(1);
+            }
+
+            // Replace 'escape character' substrings 
+            // with actual escape characters
+            content = content.Substring(1, content.Length - 2)
+                .Replace("\\n", "\n")
+                .Replace("\\\"", "\"")
+                .Replace("\\\\", "\\");
+
+            List<SourceLine> expandedInstructions = new();
+            List<byte> pushBytes = new();
+
+            // Convert content string to ASCII bytes
+            byte[] bytes = System.Text.Encoding.ASCII.GetBytes(content);
+            List<byte> byteList = new(bytes);
+
+            // Start at the end of the byte list
+            for (int i = byteList.Count - 1; i >= 0; i--) {
+                pushBytes.Add(byteList[i]);
+
+                // Form one instruction every 3 characters 
+                // or when the content string ends
+                if (pushBytes.Count == 3 || i == byteList.Count - byteList.Count % 3) {
+                    byte contByte = (byte)0x01;
+
+                    // Add null terminator when content string ends
+                    if (i == byteList.Count - byteList.Count % 3) {
+
+                        // Pad push byte lists that are too short
+                        for (int j = 0; pushBytes.Count < 3; j++) {
+                            pushBytes.Insert(0, (byte)0x01);
+                        }
+
+                        contByte = (byte)0x00;
+                    }
+
+                    // For content strings of a lengths divisible by three, the
+                    // content string ends after the first two iterations
+                    if (byteList.Count % 3 == 0 && i == byteList.Count - 3) {
+                        contByte = (byte)0x00;
+                    }
+
+                    // Continue if the end of the content 
+                    // string has not been reached
+                    pushBytes.Insert(0, contByte);
+
+                    // Reverse for proper ordering
+                    byte[] pushArray = pushBytes.ToArray();
+                    Array.Reverse(pushArray);
+
+                    // Expand push array to push instruction
+                    string pushArg = $"0x{BitConverter.ToUInt32(pushArray, 0):X8}";
+                    expandedInstructions.Add(new SourceLine($"push {pushArg}",
+                                lineNumber, programCounter));
+                    programCounter += 4;
+
+                    // Reset push byte list
+                    pushBytes.Clear();
+                }
+            }
+            // Add push instructions expanded from stpush
+            return (expandedInstructions.ToArray(), false);
         }
         return (new[] { new SourceLine(line, lineNumber, programCounter) }, false);
     }
@@ -360,7 +441,6 @@ namespace Instruction {
         }
     }
 }
-
 
 // CGW: Main processor class for the assembler.
 class Processor {
