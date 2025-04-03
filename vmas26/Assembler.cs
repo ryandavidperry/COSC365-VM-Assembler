@@ -169,14 +169,24 @@ namespace Instruction {
         public int Encode() => unchecked((int)(0x00000000 | (value ?? 0)));
     }
 
-    // CGW: Represents a Swap instruction with two optional parameters.
-    public class Swap : IInstruction {
-        private Nullable<int> first, second;
-        public Swap(Nullable<int> first, Nullable<int> second) {
-            this.first = first;
-            this.second = second;
+    // CGW: Swap fix prototype.
+    public class Swap : Instruction.IInstruction
+    {
+        private readonly int _from = 4;
+        private readonly int _to = 0;
+
+        public Swap(int? from_, int? to)
+        {
+            // Assign from_ and to only if they are not null, otherwise keep the default value.
+            _from = from_ ?? 4; 
+            _to = to ?? 0; 
         }
-        public int Encode() => unchecked((int)(0x01000000 | ((first ?? 4) & 0xFFF) << 12 | ((second ?? 0) & 0xFFF)));
+
+        public int Encode()
+        {
+            // Apply the bitwise encoding to fit the 'from' and 'to' values within the expected format
+            return (0b0001 << 24) | ((_from & 0xFFF) << 12) | (_to & 0xFFF);
+        }
     }
 
     // CGW: Represents a simple Input instruction.
@@ -304,83 +314,114 @@ namespace Instruction {
     }
 
     // RDP: Binary If instructions
-    public class Equals : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: Equals fix prototype
+    public class Equals : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public Equals(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public Equals(int? target, int pc)
+        {
+            _target = target ?? 0; // Default to 0 if target is null
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x80000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x80000000);
         }
     }
 
-    public class NotEquals : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: Not equals fix prototype 
+    public class NotEquals : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public NotEquals(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public NotEquals(int? target, int pc)
+        {
+            _target = target ?? 0; 
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x82000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x82000000);
         }
     }
 
-    public class LessThan : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: LessThan fix prototype
+    public class LessThan : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public LessThan(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public LessThan(int? target, int pc)
+        {
+            _target = target ?? 0; 
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x84000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x84000000);
         }
     }
 
-    public class GreaterThan : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: GreaterThan fix prototype 
+    public class GreaterThan : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public GreaterThan(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public GreaterThan(int? target, int pc)
+        {
+            _target = target ?? 0; 
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x86000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x86000000);
         }
     }
 
-    public class LessEquals : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: LessEquals fix prototype 
+    public class LessEquals : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public LessEquals(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public LessEquals(int? target, int pc)
+        {
+            _target = target ?? 0; 
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x88000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x88000000);
         }
     }
 
-    public class GreaterEquals : IInstruction {
-        private Nullable<int> target;
-        private int pc;
+    // CGW: GreaterEquals fix prototype
+    public class GreaterEquals : Instruction.IInstruction
+    {
+        private readonly int _target;
+        private readonly int _pc;
 
-        public GreaterEquals(Nullable<int> target, int pc) {
-            this.target = target;
-            this.pc = pc;
+        public GreaterEquals(int? target, int pc)
+        {
+            _target = target ?? 0; 
+            _pc = pc;
         }
-        public int Encode() {
-            return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x8A000000);
+
+        public int Encode()
+        {
+            return Encoder.PCRelative(_target, _pc, 0x00FFFFFF, 0x8A000000);
         }
     }
+
 
     // RDP: Unary If instructions
     public class EqualsZero : IInstruction {
@@ -439,30 +480,42 @@ namespace Instruction {
     public class Dump : IInstruction { public int Encode() => unchecked((int)0xE0000000); }
 
     // RDP: Encodes print instructions
-    public class Print : IInstruction {
-        private Nullable<int> offset;
-        private char? type;
+    public class Print : Instruction.IInstruction
+    {
+        private readonly int _offset = 0;
+        private readonly int _format = 0;
 
-        public Print(Nullable<int> offset, char? type) {
-            this.offset = offset;
-            this.type = type;
-        }
-        public int Encode() {
-            int process = (offset ?? 0) & ~3; // Ensure its a multiple of 4
-            int encodedOffset = (process >> 2) & 0x03FFFFFF;
-            encodedOffset <<= 2;
+        public Print(int? offset, char mode)
+        {
+            // Use null-coalescing operator to set default value for offset if it is null
+            _offset = offset ?? 0;  // Default to 0 if offset is null
 
-            if (type == 'h') {
-                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000001));
-            } else if (type == 'b') {
-                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000002));
-            } else if (type == 'o') {
-                return unchecked((int)(0xD0000000 | (uint)encodedOffset | 0x00000003));
+            // Set _format based on the mode
+            switch (mode)
+            {
+                case 'h':
+                    _format = 0b01;
+                    break;
+                case 'b':
+                    _format = 0b10;
+                    break;
+                case 'o':
+                    _format = 0b11;
+                    break;
+                default:
+                    // Handle invalid mode if needed (e.g., throw exception or default to 'b')
+                    _format = 0b10;  
+                    break;
             }
-
-            return unchecked((int)(0xD0000000 | (uint)encodedOffset));
         }
+
+    public int Encode()
+    {
+        // Ensure offset is a multiple of 4 (clear the last 2 bits)
+        return (0b1101 << 28) | (_offset & 0x0ffffffc) | _format;
     }
+}
+
 }
 
 // CGW: Main processor class for the assembler.
