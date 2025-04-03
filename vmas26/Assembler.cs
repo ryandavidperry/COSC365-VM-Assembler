@@ -234,11 +234,26 @@ namespace Instruction {
     }
 
     // RDP: Encodes stprint instruction with optional parameter.
+    // CGW: Idea for handling negative numbers, prototype
     public class StPrint : IInstruction {
         private Nullable<int> value;
+    
         public StPrint(Nullable<int> value) => this.value = value;
-        public int Encode() => unchecked((int)(0x40000000 | (value ?? 0)));
+    
+        public int Encode() {
+            int val = value ?? 0;
+        
+            // Handle sign extension if value is negative
+            if (val < 0) {
+                // To ensure the negative values are encoded correctly, sign extend if necessary.
+                // This ensures the value fits within the lower 28 bits properly.
+                return unchecked((int)(0x40000000 | (val & 0x0FFFFFFF)));
+            }
+            // For non-negative values, we can directly apply the value
+            return unchecked((int)(0x40000000 | (val & 0x0FFFFFFF)));
+        }
     }
+
 
     // RDP: Encodes call instruction with pc-relative offset.
     // The argument is checked before passing it to the instruction,
