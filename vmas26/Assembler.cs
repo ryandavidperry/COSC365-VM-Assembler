@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -61,7 +61,7 @@ public class Encoder {
     }
 }
 
-// CGW: Prototyping 
+// CGW: Prototyping
 namespace Instruction {
 
     // CGW: Interface representing a generic instruction with a Encode method.
@@ -114,7 +114,7 @@ namespace Instruction {
     public class Pop : IInstruction {
         private int? value;
         public Pop(int? value) => this.value = value;
-        public int Encode() => unchecked((int)(0x10000000 | (value ?? 4))); 
+        public int Encode() => unchecked((int)(0x10000000 | (value ?? 4)));
     }
 
     // CGW: Arithmetic operation instructions.
@@ -292,7 +292,7 @@ namespace Instruction {
             return Encoder.PCRelative(target, pc, 0x00FFFFFF, 0x90000000);
         }
     }
-    
+
     public class NotEqualsZero : IInstruction {
         private int? target;
         private int pc;
@@ -361,27 +361,66 @@ namespace Instruction {
     }
 }
 
-// CGW: Utility class for safe conversion of strings to integers.
-// RDP: Supports hexadecimal values
-static class Converter {
-    public static int? ToInteger(string? input) {
-        if (string.IsNullOrEmpty(input)) return (int?)null;
-
-        if (input.StartsWith("0x")) {
-            if (int.TryParse(input.Substring(2),
-                        System.Globalization.NumberStyles.HexNumber, null, out
-                        int result)) {
-                return result;
-            }
-        } else if (int.TryParse(input, out int result)) {
-            return result;
-        }
-        return (int?)null;
-    }
-}
 
 // CGW: Main processor class for the assembler.
 class Processor {
+
+    // CGW: Utility class for safe conversion of strings to integers.
+    // RDP: Supports hexadecimal values
+    private static int? ToInteger(string? input, string op, Dictionary<string,
+            int> labelPositions, int lineNumber, string[] elements) {
+
+        // Check if input is null
+        if (string.IsNullOrEmpty(input)) return (int?)null;
+
+        // Try to parse hexadecimal value to integer
+        if (input.StartsWith("0x")) {
+
+            // Exit cannot accept a hexadecimal argument.
+            if (string.Compare(op, "exit") == 0) {
+                err($"Invalid exit code: Input string was not in the correct format.", 
+                        lineNumber);
+            }
+
+            if (int.TryParse(input.Substring(2),
+                        System.Globalization.NumberStyles.HexNumber, null,
+                        out int res)) {
+                return res;
+            }
+        }
+
+        // Try to parse decimal value to integer
+        if (!input.StartsWith("0x") && int.TryParse(input, out int result)) {
+            return result;
+        }
+
+        // Without this code block, this function returns null for invalid
+        // offsets. During encoding, null values default to a valid offset.
+        // Therefore, invalid offsets must be caught now.
+        HashSet<string> TakesOffset = new() {
+            "pop", "swap", "stinput", "dup", "stprint", "return", "print", "exit"
+        };
+        if (TakesOffset.Contains(op)) {
+            if (string.Compare(op, "exit") == 0) {
+                err($"Invalid exit code: Input string was not in the correct format.", 
+                        lineNumber);
+            }
+            if (string.Compare(op, "swap") == 0) {
+                err($"invalid offset given to {op} " + 
+                    $"{(string.Compare(input, elements[1]) == 0 ? "from" : "to")} '{input}'",
+                    lineNumber);
+            } else {
+                err($"invalid offset given to {op} '{input}'", lineNumber);
+            }
+        }
+
+        HashSet<string> TakesLabel = new() { "push", "debug" };
+        if (!labelPositions.ContainsKey(input) && TakesLabel.Contains(op)) {
+            err($"Invalid value for {op}: {input}.", lineNumber);
+        }
+
+        return (int?)null;
+    }
 
     // RDP: Check first argument of PC-Relative Instruction
     private static int? validatePC(Dictionary<string, int> labelPositions,
@@ -394,7 +433,7 @@ class Processor {
         // Check if label is in labelPositions
         if (!labelPositions.ContainsKey(elements[1])) {
             err($"Invalid label: The given key '{elements[1]}' " +
-                 "was not present in the dictionary.", lineNumber);
+                    "was not present in the dictionary.", lineNumber);
         }
         return labelPositions[elements[1]];
     }
@@ -408,14 +447,6 @@ class Processor {
             err($"offsets to {elements[0]} must be multiples of 4.", lineNumber);
         }
         return arg;
-    }
-
-    // RDP: Validates condition
-    private static bool checkArgs(bool cond, string ?msg, int lineNumber) {
-        if (!cond) {
-            err(msg, lineNumber);
-        }
-        return true;
     }
 
     // RDP: Prints an error message and stops program
@@ -458,7 +489,7 @@ class Processor {
                     string labelName = operations[0].OriginalText.TrimEnd(':');
                     if (labelPositions.ContainsKey(labelName)) {
                         Console.WriteLine($"Error: Duplicate label '{labelName}'" +
-                                          $" detected at address {programCounter}");
+                                $" detected at address {programCounter}");
                         Environment.Exit(1);
                     }
                     labelPositions[labelName] = programCounter;
@@ -475,8 +506,10 @@ class Processor {
             int lineNumber = lines[i].LineNumber;
             int pc = lines[i].ProgramCounter;
             var elements = lines[i].Elements;
-            int? argOne = Converter.ToInteger(elements.ElementAtOrDefault(1));
-            int? argTwo = Converter.ToInteger(elements.ElementAtOrDefault(2));
+            int? argOne = ToInteger(elements.ElementAtOrDefault(1),
+                    elements[0], labelPositions, lineNumber, elements);
+            int? argTwo = ToInteger(elements.ElementAtOrDefault(2),
+                    elements[0], labelPositions, lineNumber, elements);
 
             // CGW: Resolve labels to memory addresses if applicable.
             if (elements.Length > 1 && labelPositions.ContainsKey(elements[1])) {
@@ -538,8 +571,9 @@ class Processor {
                             elements, lineNumber), pc),
                 "ifmi" => new Instruction.LessThanZero(validatePC(labelPositions,
                             elements, lineNumber), pc),
-                "ifpl" => new Instruction.GreaterThanEqualZero(validatePC(labelPositions,
-                            elements, lineNumber), pc),
+                "ifpl" => new
+                    Instruction.GreaterThanEqualZero(validatePC(labelPositions,
+                                elements, lineNumber), pc),
                 "dump" => new Instruction.Dump(),
                 "print" => new Instruction.Print(argOne, 'd'),
                 "printh" => new Instruction.Print(argOne, 'h'),
@@ -572,4 +606,3 @@ class Processor {
         Console.WriteLine("Assembly completed successfully.");
     }
 }
-
